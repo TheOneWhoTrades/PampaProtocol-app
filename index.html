@@ -1,688 +1,1302 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>PampaToken — Ganadería Digital Argentina</title>
-
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-
-<!-- React + Babel -->
-<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js"></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PampaToken — Invertí en ganadería real</title>
 
 <!-- Google Fonts -->
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet"/>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Cormorant:ital,wght@0,300;0,400;1,300&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+<!-- Firebase -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, query, where, orderBy, onSnapshot, serverTimestamp, updateDoc, deleteDoc }
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyA1Qxy0zfBjgaoKiI_nih57lfzA8OcdQaM",
+    authDomain: "pampatoken-27bbb.firebaseapp.com",
+    projectId: "pampatoken-27bbb",
+    storageBucket: "pampatoken-27bbb.firebasestorage.app",
+    messagingSenderId: "229577701039",
+    appId: "1:229577701039:web:f6feb61b4538f5026dc65a",
+    measurementId: "G-J440EPF2ET"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  window._fb = { auth, db, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, doc, setDoc, getDoc, collection, addDoc, getDocs, query, where, orderBy, onSnapshot, serverTimestamp, updateDoc, deleteDoc };
+</script>
 
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { background:#1a2e1a; font-family:'Lato',sans-serif; }
-  button { font-family:'Lato',sans-serif; cursor:pointer; }
-  input,select { font-family:'Lato',sans-serif; }
-  input:focus,select:focus { outline:none; border-color:#5a8f3c !important; }
-  select option { background:#162416; color:#f0ece0; }
-  ::-webkit-scrollbar { width:6px; }
-  ::-webkit-scrollbar-track { background:#1a2e1a; }
-  ::-webkit-scrollbar-thumb { background:#3a5c3a; border-radius:3px; }
+/* ===== VARIABLES ===== */
+:root {
+  --verde: #1a3a2a;
+  --verde-medio: #2a5040;
+  --verde-claro: #3d7060;
+  --crema: #f5f0e8;
+  --crema-oscuro: #e8e0d0;
+  --dorado: #c9a84c;
+  --dorado-claro: #e2c97e;
+  --texto: #1a1a18;
+  --texto-suave: #5a5a4a;
+  --blanco: #fdfaf5;
+
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'Montserrat', sans-serif;
+
+  --trans: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== RESET ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  background: var(--verde);
+  color: var(--crema);
+  overflow-x: hidden;
+}
+
+/* ===== NAV ===== */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.2rem 3rem;
+  background: rgba(26,58,42,0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(201,168,76,0.15);
+}
+.nav-logo {
+  font-family: var(--font-display);
+  font-size: 1.5rem; font-weight: 600; letter-spacing: 0.05em;
+  color: var(--crema); text-decoration: none;
+}
+.nav-logo span { color: var(--dorado); }
+nav a.nav-cta {
+  font-family: var(--font-body); font-size: 0.7rem; font-weight: 500;
+  letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--dorado); text-decoration: none;
+  border: 1px solid var(--dorado); padding: 0.5rem 1.2rem;
+  transition: var(--trans);
+}
+nav a.nav-cta:hover { background: var(--dorado); color: var(--verde); }
+
+/* ===== HERO ===== */
+.hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 8rem 2rem 5rem;
+  position: relative; overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 30%, rgba(61,112,96,0.25) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 40% at 80% 70%, rgba(201,168,76,0.08) 0%, transparent 60%);
+}
+.hero-tag {
+  font-family: var(--font-body); font-size: 0.65rem; font-weight: 500;
+  letter-spacing: 0.25em; text-transform: uppercase;
+  color: var(--dorado); border: 1px solid rgba(201,168,76,0.35);
+  padding: 0.4rem 1.2rem; margin-bottom: 2.5rem;
+  display: inline-block;
+  animation: fadeUp 0.8s ease both;
+}
+.hero h1 {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 7vw, 6.5rem);
+  font-weight: 300; line-height: 1.1;
+  color: var(--crema); margin-bottom: 1.5rem;
+  animation: fadeUp 0.8s 0.15s ease both;
+}
+.hero h1 em { font-style: italic; color: var(--dorado-claro); }
+.hero p {
+  font-size: 0.85rem; font-weight: 300; letter-spacing: 0.05em;
+  line-height: 1.9; color: rgba(245,240,232,0.7);
+  max-width: 480px; margin: 0 auto 3rem;
+  animation: fadeUp 0.8s 0.3s ease both;
+}
+.hero-btns {
+  display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;
+  animation: fadeUp 0.8s 0.45s ease both;
+}
+.btn-primary {
+  font-family: var(--font-body); font-size: 0.7rem; font-weight: 500;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  background: var(--dorado); color: var(--verde);
+  border: none; padding: 0.9rem 2.2rem; cursor: pointer;
+  transition: var(--trans); text-decoration: none; display: inline-block;
+}
+.btn-primary:hover { background: var(--dorado-claro); transform: translateY(-1px); }
+.btn-secondary {
+  font-family: var(--font-body); font-size: 0.7rem; font-weight: 500;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  background: transparent; color: var(--crema);
+  border: 1px solid rgba(245,240,232,0.3); padding: 0.9rem 2.2rem; cursor: pointer;
+  transition: var(--trans); text-decoration: none; display: inline-block;
+}
+.btn-secondary:hover { border-color: var(--crema); }
+
+/* ===== DIVISOR ===== */
+.divider {
+  display: flex; align-items: center; gap: 1.5rem;
+  padding: 0 3rem; max-width: 900px; margin: 0 auto;
+}
+.divider-line { flex: 1; height: 1px; background: rgba(201,168,76,0.25); }
+.divider-diamond {
+  width: 8px; height: 8px;
+  background: var(--dorado); transform: rotate(45deg);
+  flex-shrink: 0;
+}
+
+/* ===== SECCIÓN GENÉRICA ===== */
+.section {
+  padding: 7rem 2rem;
+  max-width: 1100px; margin: 0 auto;
+}
+.section-tag {
+  font-family: var(--font-body); font-size: 0.6rem; font-weight: 500;
+  letter-spacing: 0.3em; text-transform: uppercase;
+  color: var(--dorado); margin-bottom: 1.5rem; display: block;
+}
+.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 4vw, 3.8rem);
+  font-weight: 300; line-height: 1.2; color: var(--crema);
+  margin-bottom: 1rem;
+}
+.section-title em { font-style: italic; color: var(--dorado-claro); }
+.section-sub {
+  font-size: 0.8rem; font-weight: 300; letter-spacing: 0.04em;
+  line-height: 1.9; color: rgba(245,240,232,0.6);
+  max-width: 560px;
+}
+
+/* ===== PASOS ===== */
+.steps {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 2px; margin-top: 4rem;
+}
+.step {
+  background: rgba(42,80,64,0.3);
+  border: 1px solid rgba(201,168,76,0.1);
+  padding: 2.5rem 2rem;
+  transition: var(--trans);
+  position: relative; overflow: hidden;
+}
+.step::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--dorado), transparent);
+  opacity: 0; transition: var(--trans);
+}
+.step:hover { background: rgba(42,80,64,0.5); }
+.step:hover::before { opacity: 1; }
+.step-num {
+  font-family: var(--font-display); font-size: 3.5rem; font-weight: 300;
+  color: rgba(201,168,76,0.2); line-height: 1;
+  margin-bottom: 1.2rem; display: block;
+}
+.step h3 {
+  font-family: var(--font-display); font-size: 1.3rem; font-weight: 500;
+  color: var(--crema); margin-bottom: 0.8rem;
+}
+.step p {
+  font-size: 0.75rem; font-weight: 300; line-height: 1.8;
+  color: rgba(245,240,232,0.6);
+}
+
+/* ===== POR QUÉ ===== */
+.why-section {
+  background: rgba(15,30,22,0.6);
+  border-top: 1px solid rgba(201,168,76,0.1);
+  border-bottom: 1px solid rgba(201,168,76,0.1);
+  padding: 7rem 2rem;
+}
+.why-inner { max-width: 1100px; margin: 0 auto; }
+.why-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 2rem; margin-top: 4rem;
+}
+.why-card {
+  padding: 2rem;
+  border-left: 1px solid rgba(201,168,76,0.2);
+  transition: var(--trans);
+}
+.why-card:hover { border-left-color: var(--dorado); }
+.why-icon { font-size: 1.8rem; margin-bottom: 1.2rem; display: block; }
+.why-card h4 {
+  font-family: var(--font-display); font-size: 1.2rem; font-weight: 500;
+  color: var(--crema); margin-bottom: 0.6rem;
+}
+.why-card p {
+  font-size: 0.75rem; font-weight: 300; line-height: 1.8;
+  color: rgba(245,240,232,0.6);
+}
+
+/* ===== SIMULADOR — WRAPPER ===== */
+.simulator-section {
+  padding: 7rem 0 0;
+}
+.simulator-header {
+  text-align: center; padding: 0 2rem 5rem;
+}
+.simulator-bg {
+  background: rgba(10,22,16,0.8);
+  border-top: 1px solid rgba(201,168,76,0.2);
+  padding: 4rem 2rem 6rem;
+}
+
+/* ===== AUTH ===== */
+#auth-wall {
+  max-width: 420px; margin: 0 auto; text-align: center;
+}
+#auth-wall h2 {
+  font-family: var(--font-display); font-size: 2.2rem; font-weight: 300;
+  color: var(--crema); margin-bottom: 0.5rem;
+}
+#auth-wall p {
+  font-size: 0.75rem; color: rgba(245,240,232,0.5); margin-bottom: 2.5rem;
+  letter-spacing: 0.05em;
+}
+.auth-tabs {
+  display: flex; border-bottom: 1px solid rgba(201,168,76,0.2); margin-bottom: 2rem;
+}
+.auth-tab {
+  flex: 1; padding: 0.8rem; background: none; border: none;
+  font-family: var(--font-body); font-size: 0.7rem; font-weight: 500;
+  letter-spacing: 0.15em; text-transform: uppercase;
+  color: rgba(245,240,232,0.4); cursor: pointer; transition: var(--trans);
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+}
+.auth-tab.active { color: var(--dorado); border-bottom-color: var(--dorado); }
+.auth-form { display: flex; flex-direction: column; gap: 1rem; }
+.auth-form input {
+  background: rgba(42,80,64,0.3); border: 1px solid rgba(201,168,76,0.2);
+  color: var(--crema); padding: 0.9rem 1.2rem;
+  font-family: var(--font-body); font-size: 0.8rem;
+  outline: none; transition: var(--trans);
+}
+.auth-form input::placeholder { color: rgba(245,240,232,0.3); }
+.auth-form input:focus { border-color: var(--dorado); }
+.auth-form button { margin-top: 0.5rem; }
+.auth-error {
+  font-size: 0.72rem; color: #e07070; margin-top: 0.5rem;
+  display: none;
+}
+
+/* ===== APP SIMULADOR ===== */
+#simulator-app { display: none; max-width: 1100px; margin: 0 auto; }
+
+.sim-topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 2.5rem; flex-wrap: wrap; gap: 1rem;
+}
+.sim-topbar-left h2 {
+  font-family: var(--font-display); font-size: 2rem; font-weight: 300; color: var(--crema);
+}
+.sim-topbar-left p {
+  font-size: 0.7rem; letter-spacing: 0.1em; color: rgba(245,240,232,0.4); margin-top: 0.2rem;
+}
+.sim-user {
+  display: flex; align-items: center; gap: 1rem;
+}
+.sim-user span {
+  font-size: 0.72rem; color: rgba(245,240,232,0.5); letter-spacing: 0.05em;
+}
+.btn-signout {
+  font-family: var(--font-body); font-size: 0.65rem; font-weight: 500;
+  letter-spacing: 0.15em; text-transform: uppercase;
+  background: none; border: 1px solid rgba(201,168,76,0.3); color: var(--dorado);
+  padding: 0.4rem 1rem; cursor: pointer; transition: var(--trans);
+}
+.btn-signout:hover { border-color: var(--dorado); background: rgba(201,168,76,0.08); }
+
+/* Portfolio */
+.portfolio-bar {
+  background: rgba(42,80,64,0.25); border: 1px solid rgba(201,168,76,0.12);
+  padding: 1.5rem 2rem; margin-bottom: 2.5rem;
+  display: flex; gap: 3rem; flex-wrap: wrap; align-items: center;
+}
+.portfolio-stat label {
+  display: block; font-size: 0.6rem; font-weight: 500;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: rgba(245,240,232,0.4); margin-bottom: 0.3rem;
+}
+.portfolio-stat .val {
+  font-family: var(--font-display); font-size: 1.6rem; font-weight: 400;
+  color: var(--crema);
+}
+.portfolio-stat .val.pos { color: #7ec8a0; }
+.portfolio-stat .val.neg { color: #e07070; }
+
+/* Tokens Grid */
+.tokens-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem; margin-bottom: 3rem;
+}
+.token-card {
+  background: rgba(42,80,64,0.2); border: 1px solid rgba(201,168,76,0.12);
+  padding: 1.8rem; position: relative; overflow: hidden;
+  transition: var(--trans);
+}
+.token-card:hover { border-color: rgba(201,168,76,0.3); background: rgba(42,80,64,0.3); }
+.token-card::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--dorado), transparent);
+  opacity: 0; transition: var(--trans);
+}
+.token-card:hover::after { opacity: 0.5; }
+
+.token-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; }
+.token-name { font-family: var(--font-display); font-size: 1.4rem; font-weight: 500; color: var(--crema); }
+.token-ticker {
+  font-size: 0.6rem; font-weight: 500; letter-spacing: 0.2em;
+  color: var(--dorado); border: 1px solid rgba(201,168,76,0.3);
+  padding: 0.25rem 0.6rem;
+}
+.token-price {
+  font-family: var(--font-display); font-size: 2.2rem; font-weight: 300;
+  color: var(--crema); margin-bottom: 0.3rem;
+}
+.token-change {
+  font-size: 0.72rem; font-weight: 500; letter-spacing: 0.08em;
+  margin-bottom: 1.5rem;
+}
+.token-change.up { color: #7ec8a0; }
+.token-change.down { color: #e07070; }
+
+.mini-chart { height: 40px; margin-bottom: 1.5rem; position: relative; }
+.mini-chart svg { width: 100%; height: 100%; }
+
+.token-actions { display: flex; gap: 0.6rem; }
+.btn-buy, .btn-sell {
+  flex: 1; padding: 0.6rem; font-family: var(--font-body);
+  font-size: 0.65rem; font-weight: 500; letter-spacing: 0.15em;
+  text-transform: uppercase; border: 1px solid; cursor: pointer;
+  transition: var(--trans);
+}
+.btn-buy { background: rgba(126,200,160,0.1); border-color: rgba(126,200,160,0.4); color: #7ec8a0; }
+.btn-buy:hover { background: rgba(126,200,160,0.2); }
+.btn-sell { background: rgba(224,112,112,0.1); border-color: rgba(224,112,112,0.4); color: #e07070; }
+.btn-sell:hover { background: rgba(224,112,112,0.2); }
+
+/* Order book */
+.sim-columns {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 3rem;
+}
+@media (max-width: 700px) { .sim-columns { grid-template-columns: 1fr; } }
+
+.sim-panel {
+  background: rgba(42,80,64,0.2); border: 1px solid rgba(201,168,76,0.12); padding: 1.5rem;
+}
+.sim-panel h3 {
+  font-family: var(--font-display); font-size: 1.1rem; font-weight: 500;
+  color: var(--crema); margin-bottom: 1.2rem; padding-bottom: 0.8rem;
+  border-bottom: 1px solid rgba(201,168,76,0.15);
+}
+
+/* Order form */
+.order-form { display: flex; flex-direction: column; gap: 0.8rem; }
+.form-row { display: flex; flex-direction: column; gap: 0.3rem; }
+.form-row label {
+  font-size: 0.6rem; font-weight: 500; letter-spacing: 0.15em;
+  text-transform: uppercase; color: rgba(245,240,232,0.4);
+}
+.form-row select, .form-row input {
+  background: rgba(26,58,42,0.6); border: 1px solid rgba(201,168,76,0.2);
+  color: var(--crema); padding: 0.65rem 0.9rem;
+  font-family: var(--font-body); font-size: 0.78rem; outline: none;
+  transition: var(--trans);
+}
+.form-row select:focus, .form-row input:focus { border-color: var(--dorado); }
+.form-row select option { background: #1a3a2a; }
+.order-total {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.7rem 0; border-top: 1px solid rgba(201,168,76,0.1);
+  font-size: 0.72rem; color: rgba(245,240,232,0.5);
+}
+.order-total span:last-child { color: var(--crema); font-weight: 500; }
+
+/* Order book list */
+.orderbook-list { font-size: 0.75rem; }
+.ob-header {
+  display: grid; grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 0.5rem; padding: 0.4rem 0; margin-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(201,168,76,0.15);
+  color: rgba(245,240,232,0.4); font-size: 0.6rem;
+  letter-spacing: 0.12em; text-transform: uppercase;
+}
+.ob-row {
+  display: grid; grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 0.5rem; padding: 0.45rem 0;
+  border-bottom: 1px solid rgba(245,240,232,0.04);
+  transition: background 0.2s;
+}
+.ob-row:hover { background: rgba(245,240,232,0.03); }
+.ob-row.buy .col-type { color: #7ec8a0; }
+.ob-row.sell .col-type { color: #e07070; }
+.ob-row .col-price { color: var(--crema); }
+.ob-row .col-qty, .ob-row .col-token { color: rgba(245,240,232,0.55); }
+.ob-empty {
+  text-align: center; padding: 2rem;
+  font-size: 0.72rem; color: rgba(245,240,232,0.25);
+}
+
+/* Mis posiciones */
+.positions-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+.positions-table th {
+  text-align: left; padding: 0.5rem 0.8rem;
+  font-size: 0.6rem; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase;
+  color: rgba(245,240,232,0.4); border-bottom: 1px solid rgba(201,168,76,0.15);
+}
+.positions-table td { padding: 0.7rem 0.8rem; border-bottom: 1px solid rgba(245,240,232,0.05); }
+.positions-table tr:hover td { background: rgba(245,240,232,0.03); }
+.pnl-pos { color: #7ec8a0; }
+.pnl-neg { color: #e07070; }
+.no-positions {
+  text-align: center; padding: 2.5rem;
+  font-size: 0.75rem; color: rgba(245,240,232,0.25);
+}
+
+/* Historial */
+.history-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.history-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.7rem 0.8rem; background: rgba(26,58,42,0.3);
+  font-size: 0.72rem;
+}
+.history-item .hi-left { display: flex; gap: 0.8rem; align-items: center; }
+.hi-badge {
+  font-size: 0.58rem; font-weight: 600; letter-spacing: 0.1em;
+  padding: 0.2rem 0.55rem; text-transform: uppercase;
+}
+.hi-badge.buy { background: rgba(126,200,160,0.15); color: #7ec8a0; }
+.hi-badge.sell { background: rgba(224,112,112,0.15); color: #e07070; }
+.hi-token { color: var(--crema); }
+.hi-detail { color: rgba(245,240,232,0.45); }
+.hi-amount { color: var(--crema); }
+
+/* Modal */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(10,22,16,0.85); backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.3s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: #0f2018; border: 1px solid rgba(201,168,76,0.2);
+  padding: 2.5rem; width: 90%; max-width: 400px;
+  transform: translateY(20px); transition: transform 0.3s;
+}
+.modal-overlay.open .modal { transform: translateY(0); }
+.modal h3 {
+  font-family: var(--font-display); font-size: 1.6rem; font-weight: 400;
+  color: var(--crema); margin-bottom: 0.4rem;
+}
+.modal p.modal-sub { font-size: 0.72rem; color: rgba(245,240,232,0.45); margin-bottom: 1.8rem; }
+.modal-fields { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; }
+.modal-field label {
+  display: block; font-size: 0.6rem; font-weight: 500;
+  letter-spacing: 0.15em; text-transform: uppercase;
+  color: rgba(245,240,232,0.4); margin-bottom: 0.3rem;
+}
+.modal-field input {
+  width: 100%; background: rgba(42,80,64,0.3); border: 1px solid rgba(201,168,76,0.2);
+  color: var(--crema); padding: 0.75rem 1rem;
+  font-family: var(--font-body); font-size: 0.82rem; outline: none;
+  transition: var(--trans);
+}
+.modal-field input:focus { border-color: var(--dorado); }
+.modal-summary {
+  background: rgba(42,80,64,0.25); padding: 1rem;
+  margin-bottom: 1.5rem; font-size: 0.75rem;
+}
+.modal-summary-row {
+  display: flex; justify-content: space-between;
+  padding: 0.35rem 0; border-bottom: 1px solid rgba(245,240,232,0.06);
+  color: rgba(245,240,232,0.6);
+}
+.modal-summary-row:last-child { border-bottom: none; color: var(--crema); font-weight: 500; }
+.modal-btns { display: flex; gap: 0.8rem; }
+.modal-btns button { flex: 1; padding: 0.75rem; }
+.btn-cancel {
+  background: none; border: 1px solid rgba(245,240,232,0.2); color: rgba(245,240,232,0.6);
+  font-family: var(--font-body); font-size: 0.68rem; font-weight: 500;
+  letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; transition: var(--trans);
+}
+.btn-cancel:hover { border-color: rgba(245,240,232,0.4); }
+.btn-confirm-buy {
+  background: rgba(126,200,160,0.15); border: 1px solid rgba(126,200,160,0.5);
+  color: #7ec8a0; font-family: var(--font-body); font-size: 0.68rem; font-weight: 500;
+  letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; transition: var(--trans);
+}
+.btn-confirm-buy:hover { background: rgba(126,200,160,0.25); }
+.btn-confirm-sell {
+  background: rgba(224,112,112,0.15); border: 1px solid rgba(224,112,112,0.5);
+  color: #e07070; font-family: var(--font-body); font-size: 0.68rem; font-weight: 500;
+  letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; transition: var(--trans);
+}
+.btn-confirm-sell:hover { background: rgba(224,112,112,0.25); }
+.modal-error { font-size: 0.72rem; color: #e07070; margin-top: 0.5rem; display: none; }
+
+/* ===== CTA FINAL ===== */
+.cta-section {
+  text-align: center; padding: 8rem 2rem;
+  background: linear-gradient(180deg, rgba(10,22,16,0.8) 0%, var(--verde) 100%);
+}
+.cta-section h2 {
+  font-family: var(--font-display); font-size: clamp(2.5rem, 5vw, 4.5rem);
+  font-weight: 300; color: var(--crema); margin-bottom: 1rem;
+}
+.cta-section h2 em { font-style: italic; color: var(--dorado-claro); }
+.cta-section p {
+  font-size: 0.8rem; font-weight: 300; color: rgba(245,240,232,0.55);
+  margin-bottom: 3rem; letter-spacing: 0.05em;
+}
+
+/* ===== FOOTER ===== */
+footer {
+  text-align: center; padding: 2rem;
+  border-top: 1px solid rgba(201,168,76,0.1);
+  font-size: 0.65rem; color: rgba(245,240,232,0.3); letter-spacing: 0.1em;
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in { opacity: 0; transform: translateY(20px); transition: opacity 0.7s ease, transform 0.7s ease; }
+.fade-in.visible { opacity: 1; transform: none; }
+
+/* ===== TICKER PULSE ===== */
+@keyframes pricePulse {
+  0% { opacity: 1; }
+  30% { opacity: 0.4; }
+  60% { opacity: 1; }
+}
+.price-updating { animation: pricePulse 0.6s ease; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 600px) {
+  nav { padding: 1rem 1.5rem; }
+  .portfolio-bar { gap: 1.5rem; }
+  .sim-topbar { flex-direction: column; align-items: flex-start; }
+}
 </style>
 </head>
 <body>
-<div id="root"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">Pampa<span>Token</span></a>
+  <a href="#simulador" class="nav-cta">Probar simulador</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <span class="hero-tag">Ganadería tokenizada · Argentina</span>
+  <h1>Invertí en<br><em>hacienda real</em><br>desde donde estés</h1>
+  <p>Participá del negocio ganadero argentino sin necesitar campo ni experiencia. Activos físicos, transparentes y accesibles — respaldados por bovinos reales.</p>
+  <div class="hero-btns">
+    <a href="#simulador" class="btn-primary">Probar el simulador</a>
+    <a href="#como-funciona" class="btn-secondary">¿Cómo funciona?</a>
+  </div>
+</section>
+
+<!-- DIVISOR -->
+<div class="divider"><div class="divider-line"></div><div class="divider-diamond"></div><div class="divider-line"></div></div>
+
+<!-- CÓMO FUNCIONA -->
+<section class="section fade-in" id="como-funciona">
+  <span class="section-tag">El proceso</span>
+  <h2 class="section-title">Ganadería real,<br><em>inversión digital</em></h2>
+  <div class="steps">
+    <div class="step">
+      <span class="step-num">01</span>
+      <h3>Elegís tu inversión</h3>
+      <p>Explorás los lotes disponibles — tanto activos como oportunidades en pre-venta o fase semilla para entrar desde el inicio del ciclo.</p>
+    </div>
+    <div class="step">
+      <span class="step-num">02</span>
+      <h3>Comprás tu participación</h3>
+      <p>Tu inversión queda registrada y respaldada por los animales reales. Todo es auditable, trazable y seguro desde el primer peso.</p>
+    </div>
+    <div class="step">
+      <span class="step-num">03</span>
+      <h3>Seguís tu hacienda</h3>
+      <p>Accedés a reportes del estado de los animales, evolución del mercado y rendimientos en tiempo real desde tu cuenta.</p>
+    </div>
+    <div class="step">
+      <span class="step-num">04</span>
+      <h3>Liquidez inmediata, siempre</h3>
+      <p>No estás atado al ciclo del lote. Gracias a los liquidity pools podés comprar o vender tu participación en cualquier momento.</p>
+    </div>
+  </div>
+</section>
+
+<!-- POR QUÉ GANADERÍA -->
+<div class="why-section fade-in">
+  <div class="why-inner">
+    <span class="section-tag">Por qué ganadería</span>
+    <h2 class="section-title">Invertí en<br><em>un mercado real</em></h2>
+    <p class="section-sub">Argentina tiene una de las cuencas ganaderas más productivas del mundo. Ahora podés acceder a ese negocio sin intermediarios, con transparencia total y desde el monto que quieras.</p>
+    <div class="why-grid">
+      <div class="why-card">
+        <span class="why-icon">🐄</span>
+        <h4>Activo real y tangible</h4>
+        <p>Cada inversión está respaldada por bovinos reales, auditados y trazables. No hay especulación vacía.</p>
+      </div>
+      <div class="why-card">
+        <span class="why-icon">📈</span>
+        <h4>Precio en alza histórica</h4>
+        <p>El valor del novillo gordo creció sostenidamente en dólares durante la última década, superando a muchos activos financieros.</p>
+      </div>
+      <div class="why-card">
+        <span class="why-icon">🌿</span>
+        <h4>Fuera del sistema tradicional</h4>
+        <p>Ganadería con rendimiento en dólares, desacoplada de la volatilidad financiera convencional.</p>
+      </div>
+      <div class="why-card">
+        <span class="why-icon">🔑</span>
+        <h4>Acceso desde montos bajos</h4>
+        <p>Sin necesidad de comprar un campo entero. Participás con lo que podés, sin barreras de entrada.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DIVISOR -->
+<div class="divider" style="padding-top:4rem"><div class="divider-line"></div><div class="divider-diamond"></div><div class="divider-line"></div></div>
+
+<!-- SIMULADOR -->
+<section class="simulator-section" id="simulador">
+  <div class="simulator-header fade-in">
+    <span class="section-tag">Simulador de trading</span>
+    <h2 class="section-title">Operá los tokens<br><em>en tiempo real</em></h2>
+    <p class="section-sub" style="margin:0 auto;text-align:center;">Los precios siguen el índice INMAG y se actualizan cada 20 segundos. Practicá sin riesgo antes de invertir capital real.</p>
+  </div>
+
+  <div class="simulator-bg">
+
+    <!-- AUTH WALL -->
+    <div id="auth-wall">
+      <h2>Acceder al simulador</h2>
+      <p>Creá una cuenta o iniciá sesión para operar</p>
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Ingresar</button>
+        <button class="auth-tab" id="tab-register" onclick="switchTab('register')">Registrarse</button>
+      </div>
+      <div class="auth-form" id="form-login">
+        <div class="form-row">
+          <label>Email</label>
+          <input type="email" id="login-email" placeholder="tu@email.com" />
+        </div>
+        <div class="form-row">
+          <label>Contraseña</label>
+          <input type="password" id="login-pass" placeholder="••••••••" />
+        </div>
+        <div class="auth-error" id="login-error"></div>
+        <button class="btn-primary" onclick="doLogin()">Ingresar</button>
+      </div>
+      <div class="auth-form" id="form-register" style="display:none">
+        <div class="form-row">
+          <label>Email</label>
+          <input type="email" id="reg-email" placeholder="tu@email.com" />
+        </div>
+        <div class="form-row">
+          <label>Contraseña</label>
+          <input type="password" id="reg-pass" placeholder="Mín. 6 caracteres" />
+        </div>
+        <div class="auth-error" id="reg-error"></div>
+        <button class="btn-primary" onclick="doRegister()">Crear cuenta</button>
+      </div>
+    </div>
+
+    <!-- SIMULATOR APP -->
+    <div id="simulator-app">
+      <div class="sim-topbar">
+        <div class="sim-topbar-left">
+          <h2>Simulador PampaToken</h2>
+          <p>Precios actualizados cada 20 segundos · Índice INMAG</p>
+        </div>
+        <div class="sim-user">
+          <span id="user-email-display"></span>
+          <button class="btn-signout" onclick="doSignOut()">Salir</button>
+        </div>
+      </div>
+
+      <!-- Portfolio -->
+      <div class="portfolio-bar">
+        <div class="portfolio-stat">
+          <label>Saldo disponible</label>
+          <div class="val" id="stat-cash">$0</div>
+        </div>
+        <div class="portfolio-stat">
+          <label>Valor de cartera</label>
+          <div class="val" id="stat-portfolio">$0</div>
+        </div>
+        <div class="portfolio-stat">
+          <label>P&L Total</label>
+          <div class="val" id="stat-pnl">$0</div>
+        </div>
+      </div>
+
+      <!-- Token Cards -->
+      <div class="tokens-grid" id="tokens-grid"></div>
+
+      <!-- Order form + Order book -->
+      <div class="sim-columns">
+        <div class="sim-panel">
+          <h3>Nueva Orden</h3>
+          <div class="order-form">
+            <div class="form-row">
+              <label>Token</label>
+              <select id="order-token">
+                <option value="ANGUS">Angus (ANG)</option>
+                <option value="HEREFORD">Hereford (HFD)</option>
+                <option value="BRANGUS">Brangus (BRG)</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label>Tipo</label>
+              <select id="order-type">
+                <option value="buy">Comprar</option>
+                <option value="sell">Vender</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label>Cantidad</label>
+              <input type="number" id="order-qty" placeholder="0" min="1" step="1" value="1" oninput="updateOrderTotal()" />
+            </div>
+            <div class="form-row">
+              <label>Precio límite (dejar vacío para precio de mercado)</label>
+              <input type="number" id="order-price" placeholder="Precio de mercado" step="0.01" oninput="updateOrderTotal()" />
+            </div>
+            <div class="order-total">
+              <span>Total estimado</span>
+              <span id="order-total-display">—</span>
+            </div>
+            <button class="btn-primary" onclick="submitOrder()">Colocar orden</button>
+          </div>
+        </div>
+
+        <div class="sim-panel">
+          <h3>Libro de órdenes</h3>
+          <div class="ob-header">
+            <span>Tipo</span><span>Token</span><span>Precio</span><span>Cant.</span>
+          </div>
+          <div id="orderbook-list"></div>
+        </div>
+      </div>
+
+      <!-- Posiciones e Historial -->
+      <div class="sim-columns">
+        <div class="sim-panel">
+          <h3>Mis posiciones</h3>
+          <div id="positions-container"></div>
+        </div>
+        <div class="sim-panel">
+          <h3>Historial de operaciones</h3>
+          <div id="history-container"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<div class="cta-section fade-in">
+  <h2>Sé de los primeros<br><em>en acceder</em></h2>
+  <p>Cupos limitados para la etapa de acceso anticipado.</p>
+  <a href="https://theonewhotrades.github.io/PampaToken/#registrate" target="_blank" class="btn-primary">Anotarme ahora</a>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  © 2025 PampaToken. Todos los derechos reservados.
+</footer>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h3 id="modal-title">Confirmar orden</h3>
+    <p class="modal-sub" id="modal-sub"></p>
+    <div class="modal-fields">
+      <div class="modal-field">
+        <label>Cantidad</label>
+        <input type="number" id="modal-qty" min="1" step="1" value="1" oninput="updateModalTotal()" />
+      </div>
+    </div>
+    <div class="modal-summary">
+      <div class="modal-summary-row"><span>Token</span><span id="ms-token">—</span></div>
+      <div class="modal-summary-row"><span>Precio</span><span id="ms-price">—</span></div>
+      <div class="modal-summary-row"><span>Cantidad</span><span id="ms-qty">—</span></div>
+      <div class="modal-summary-row"><span>Total</span><span id="ms-total">—</span></div>
+    </div>
+    <div class="modal-error" id="modal-error"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button id="modal-confirm-btn" onclick="confirmOrder()">Confirmar</button>
+    </div>
+  </div>
+</div>
 
 <script>
-// ── FIREBASE INIT ──────────────────────────────────────────────────────────
-const firebaseConfig = {
-  apiKey: "AIzaSyA1Qxy0zfBjgaoKiI_nih57lfzA8OcdQaM",
-  authDomain: "pampatoken-27bbb.firebaseapp.com",
-  projectId: "pampatoken-27bbb",
-  storageBucket: "pampatoken-27bbb.firebasestorage.app",
-  messagingSenderId: "229577701039",
-  appId: "1:229577701039:web:f6feb61b4538f5026dc65a"
-};
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db   = firebase.firestore();
-// persistencia automática (mantiene sesión)
-auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-</script>
+// ===== SCROLL ANIMATIONS =====
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
 
-<script type="text/babel">
-const { useState, useEffect, useRef } = React;
+// ===== HELPERS =====
+const fmt = n => '$' + Number(n).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtPct = n => (n >= 0 ? '+' : '') + n.toFixed(2) + '%';
 
-// ── PALETA ────────────────────────────────────────────────────────────────
-const G = {
-  bg:"#1a2e1a", bgMid:"#223322", bgCard:"#1e2e1e", bgPanel:"#162416",
-  bgLight:"#2a3f2a", border:"#3a5c3a", borderLight:"#4a7a4a",
-  cream:"#f5f0e8", creamDim:"#c8bfa8", creamDark:"#9e9078",
-  green1:"#5a8f3c", green2:"#7ab648", green3:"#a8d470",
-  red:"#c0392b", redLight:"#e74c3c",
-  gold:"#c9a84c", goldLight:"#e8c96a",
-  text:"#f0ece0", textDim:"#8aad6e", white:"#ffffff",
-};
-const ARS_RATE = 1180;
-
-// ── SVG VACA ──────────────────────────────────────────────────────────────
-const CowSVG = ({ size=48, opacity=0.07, style={} }) => (
-  <svg width={size} height={size} viewBox="0 0 100 100" fill="none" style={{...style,opacity}}>
-    <ellipse cx="50" cy="58" rx="30" ry="20" fill={G.cream}/>
-    <ellipse cx="78" cy="46" rx="14" ry="11" fill={G.cream}/>
-    <ellipse cx="68" cy="38" rx="5" ry="3" fill={G.cream} transform="rotate(-20 68 38)"/>
-    <ellipse cx="90" cy="38" rx="5" ry="3" fill={G.cream} transform="rotate(20 90 38)"/>
-    <path d="M70 37 Q65 28 60 30" stroke={G.cream} strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-    <path d="M86 37 Q91 28 96 30" stroke={G.cream} strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-    <rect x="25" y="74" width="7" height="16" rx="3" fill={G.cream}/>
-    <rect x="38" y="74" width="7" height="16" rx="3" fill={G.cream}/>
-    <rect x="52" y="74" width="7" height="16" rx="3" fill={G.cream}/>
-    <rect x="65" y="74" width="7" height="16" rx="3" fill={G.cream}/>
-    <ellipse cx="40" cy="55" rx="8" ry="6" fill="#1a2e1a" opacity="0.5"/>
-    <ellipse cx="58" cy="62" rx="6" ry="4" fill="#1a2e1a" opacity="0.5"/>
-    <circle cx="82" cy="45" r="2" fill="#1a2e1a"/>
-    <ellipse cx="90" cy="52" rx="5" ry="3.5" fill={G.creamDim}/>
-    <circle cx="88" cy="52" r="1" fill="#333"/>
-    <circle cx="92" cy="52" r="1" fill="#333"/>
-    <path d="M20 55 Q10 50 12 60 Q14 65 20 63" stroke={G.cream} strokeWidth="2" fill="none" strokeLinecap="round"/>
-  </svg>
-);
-
-const BgPattern = () => (
-  <div style={{position:"fixed",inset:0,zIndex:0,pointerEvents:"none",overflow:"hidden"}}>
-    <div style={{position:"absolute",inset:0,background:`radial-gradient(ellipse at 20% 50%, #2d4a1e44 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, #1a3a1a44 0%, transparent 50%)`}}/>
-    {[{top:"8%",left:"5%",size:90,rot:0},{top:"15%",left:"88%",size:70,rot:180},{top:"45%",left:"2%",size:60,rot:15},{top:"65%",left:"92%",size:80,rot:-10},{top:"80%",left:"15%",size:55,rot:5},{top:"30%",left:"50%",size:45,rot:180},{top:"88%",left:"70%",size:65,rot:0}].map((v,i)=>(
-      <div key={i} style={{position:"absolute",top:v.top,left:v.left,transform:`rotate(${v.rot}deg)`,opacity:0.045}}>
-        <CowSVG size={v.size} opacity={1}/>
-      </div>
-    ))}
-    <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:`linear-gradient(90deg, transparent, ${G.green2}88, ${G.gold}88, transparent)`}}/>
-  </div>
-);
-
-// ── TOKENS ────────────────────────────────────────────────────────────────
+// ===== TOKEN STATE =====
+const BASE_INMAG = 4236.467;
 const TOKENS = {
-  HFORD:{ name:"Hereford Token", ticker:"HFORD", basePrice:124.5,  color:G.cream,     colorDim:G.creamDim, desc:"Raza Hereford — carne premium de exportación",   icon:"🐄" },
-  ANG:  { name:"Angus Token",    ticker:"ANG",   basePrice:148.2,  color:G.green3,    colorDim:G.green2,   desc:"Aberdeen Angus — alto marbling, cortes selectos", icon:"🐂" },
-  BRAF: { name:"Braford Token",  ticker:"BRAF",  basePrice:98.75,  color:G.goldLight, colorDim:G.gold,     desc:"Braford — rusticidad y rendimiento en feed lot",  icon:"🐃" },
+  ANGUS:    { name: 'Angus',    ticker: 'ANG', base: BASE_INMAG * 1.000, price: BASE_INMAG * 1.000, prev: BASE_INMAG * 1.000, history: [] },
+  HEREFORD: { name: 'Hereford', ticker: 'HFD', base: BASE_INMAG * 0.981, price: BASE_INMAG * 0.981, prev: BASE_INMAG * 0.981, history: [] },
+  BRANGUS:  { name: 'Brangus',  ticker: 'BRG', base: BASE_INMAG * 1.014, price: BASE_INMAG * 1.014, prev: BASE_INMAG * 1.014, history: [] },
 };
 
-const INITIAL_BALANCE = { USD:10000, HFORD:0, ANG:0, BRAF:0 };
+function updateTokenPrices() {
+  Object.keys(TOKENS).forEach(key => {
+    const t = TOKENS[key];
+    t.prev = t.price;
+    // Variación sutil: entre -1.5% y +1.5%, con drift leve hacia el base
+    const drift = (t.base - t.price) * 0.04;
+    const random = (Math.random() - 0.5) * 2 * t.base * 0.015;
+    t.price = Math.max(t.price + drift + random, t.base * 0.90);
+    t.history.push(t.price);
+    if (t.history.length > 20) t.history.shift();
+  });
+  renderTokenCards();
+  updateOrderTotal();
+  updatePortfolioStats();
+}
 
-function genHistory(base) {
-  const c=[]; let price=base*0.85;
-  for(let i=0;i<90;i++){
-    const ch=(Math.random()-0.48)*price*0.025;
-    const open=price, close=Math.max(price+ch,1);
-    c.push({open,close,high:Math.max(open,close)*(1+Math.random()*.012),low:Math.min(open,close)*(1-Math.random()*.012),vol:Math.random()*5000+500});
-    price=close;
+// Inicializar historial
+Object.keys(TOKENS).forEach(key => {
+  const t = TOKENS[key];
+  for (let i = 0; i < 15; i++) {
+    const v = t.base + (Math.random() - 0.5) * t.base * 0.03;
+    t.history.push(v);
   }
-  return c;
+  t.history.push(t.price);
+});
+
+// ===== MINI CHART =====
+function renderSparkline(history, isUp) {
+  const w = 200, h = 40;
+  const min = Math.min(...history), max = Math.max(...history);
+  const range = max - min || 1;
+  const pts = history.map((v, i) => {
+    const x = (i / (history.length - 1)) * w;
+    const y = h - ((v - min) / range) * (h - 6) - 3;
+    return `${x},${y}`;
+  }).join(' ');
+  const color = isUp ? '#7ec8a0' : '#e07070';
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round"/>
+  </svg>`;
 }
 
-const FAKE_USERS=["Estancia_LaPampa","CampoLargo","ToroNegro_SRL","VakaBit","PampasTrader","GanadoPro","FieldToken","ChacareroX","LagunaSeca","ElOmbu"];
-function genOrders(ticker,basePrice){
-  const buys=[],sells=[];
-  for(let i=0;i<8;i++){
-    buys.push({id:`b-${ticker}-${i}`,user:FAKE_USERS[Math.floor(Math.random()*FAKE_USERS.length)],price:+(basePrice*(0.97-i*0.005)+(Math.random()-0.5)*0.5).toFixed(2),qty:+(Math.random()*200+10).toFixed(0),payment:["Transferencia","Wise","USDT","Efectivo"][Math.floor(Math.random()*4)]});
-    sells.push({id:`s-${ticker}-${i}`,user:FAKE_USERS[Math.floor(Math.random()*FAKE_USERS.length)],price:+(basePrice*(1.03+i*0.005)+(Math.random()-0.5)*0.5).toFixed(2),qty:+(Math.random()*200+10).toFixed(0),payment:["Transferencia","Wise","USDT","Efectivo"][Math.floor(Math.random()*4)]});
-  }
-  return {buys,sells};
-}
-
-// ── CANDLE CHART ──────────────────────────────────────────────────────────
-function CandleChart({candles,color,height=160}){
-  const W=900,H=height,visible=candles.slice(-60);
-  const prices=visible.flatMap(c=>[c.high,c.low]);
-  const minP=Math.min(...prices),maxP=Math.max(...prices);
-  const scaleY=v=>H-((v-minP)/(maxP-minP+0.001))*(H-10)-5;
-  const cw=W/visible.length;
-  const gradId=`g${color.replace(/[^a-z0-9]/gi,'')}`;
-  return(
-    <svg viewBox={`0 0 ${W} ${H}`} style={{width:"100%",height}} preserveAspectRatio="none">
-      <defs><linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={color} stopOpacity={0.22}/><stop offset="100%" stopColor={color} stopOpacity={0}/></linearGradient></defs>
-      {[0.25,0.5,0.75].map(t=><line key={t} x1={0} x2={W} y1={H*t} y2={H*t} stroke={G.border} strokeWidth={0.6} strokeDasharray="3,6"/>)}
-      <path d={[`M ${cw*.5} ${scaleY(visible[0].close)}`,...visible.map((c,i)=>`L ${cw*i+cw*.5} ${scaleY(c.close)}`),`L ${cw*(visible.length-.5)} ${H}`,`L ${cw*.5} ${H}`,"Z"].join(" ")} fill={`url(#${gradId})`}/>
-      {visible.map((c,i)=>{
-        const up=c.close>=c.open,col=up?G.green2:G.red;
-        const y1=scaleY(Math.max(c.open,c.close)),y2=scaleY(Math.min(c.open,c.close));
-        return(<g key={i}><line x1={cw*i+cw/2} x2={cw*i+cw/2} y1={scaleY(c.high)} y2={scaleY(c.low)} stroke={col} strokeWidth={0.9}/><rect x={cw*i+cw*.15} y={y1} width={cw*.7} height={Math.max(y2-y1,1)} fill={col} rx={1}/></g>);
-      })}
-      {(()=>{const lp=scaleY(visible[visible.length-1].close);return <line x1={0} x2={W} y1={lp} y2={lp} stroke={color} strokeWidth={1} strokeDasharray="5,5" opacity={0.7}/>;})()}
-    </svg>
-  );
-}
-
-// ── ESTILOS ───────────────────────────────────────────────────────────────
-const S = {
-  app:{minHeight:"100vh",background:G.bg,fontFamily:"'Lato',sans-serif",color:G.text,overflowX:"hidden",position:"relative"},
-  page:{padding:"32px 36px",maxWidth:1400,margin:"0 auto",position:"relative",zIndex:1},
-  nav:{position:"sticky",top:0,zIndex:100,background:`${G.bgPanel}f0`,backdropFilter:"blur(16px)",borderBottom:`1px solid ${G.border}`,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 36px",height:64},
-  navLogo:{display:"flex",alignItems:"center",gap:12,fontFamily:"'Cormorant Garamond','Georgia',serif",fontSize:24,fontWeight:700,color:G.cream,letterSpacing:0.5,fontStyle:"italic"},
-  navLogoSub:{fontSize:9,fontFamily:"'Lato',sans-serif",color:G.textDim,letterSpacing:3,fontStyle:"normal",fontWeight:400,display:"block",marginTop:-2},
-  navLink:(a)=>({padding:"7px 20px",borderRadius:4,cursor:"pointer",fontSize:12,fontWeight:700,letterSpacing:1.5,textTransform:"uppercase",transition:"all .2s",background:a?`${G.green1}30`:"transparent",color:a?G.green3:G.creamDark,border:`1px solid ${a?G.green1:"transparent"}`}),
-  navBadge:{padding:"4px 12px",background:`${G.green1}20`,border:`1px solid ${G.green1}50`,borderRadius:4,fontSize:10,color:G.green3,letterSpacing:1.5,textTransform:"uppercase",fontWeight:700},
-  pageTitle:{fontFamily:"'Cormorant Garamond','Georgia',serif",fontSize:36,fontWeight:700,fontStyle:"italic",color:G.cream,marginBottom:4,lineHeight:1.1},
-  subtitle:{fontSize:12,color:G.textDim,marginBottom:32,letterSpacing:1,textTransform:"uppercase"},
-  divider:{height:1,marginBottom:28,background:`linear-gradient(90deg, ${G.border}, transparent)`},
-  card:{background:G.bgCard,border:`1px solid ${G.border}`,borderRadius:8},
-  tickerCard:(a,color)=>({flex:1,minWidth:200,padding:"18px 20px",borderRadius:8,background:a?G.bgLight:G.bgCard,border:`1px solid ${a?color:G.border}`,cursor:"pointer",transition:"all .22s",boxShadow:a?`0 0 24px ${color}22,inset 0 0 20px ${color}08`:"none",position:"relative",overflow:"hidden"}),
-  label:{fontSize:10,color:G.textDim,marginBottom:5,display:"block",letterSpacing:2,textTransform:"uppercase",fontWeight:700},
-  input:{width:"100%",boxSizing:"border-box",background:G.bgPanel,border:`1px solid ${G.border}`,color:G.cream,padding:"11px 14px",borderRadius:6,fontSize:14,marginBottom:14,outline:"none",transition:"border .18s"},
-  select:{width:"100%",boxSizing:"border-box",background:G.bgPanel,border:`1px solid ${G.border}`,color:G.cream,padding:"11px 14px",borderRadius:6,fontSize:13,marginBottom:14,outline:"none",appearance:"none"},
-  btnBuy:{width:"100%",padding:"13px",borderRadius:6,fontWeight:700,fontSize:13,letterSpacing:2,textTransform:"uppercase",border:"none",transition:"all .18s",background:`linear-gradient(135deg, ${G.green1}, #3d7a1e)`,color:G.cream,boxShadow:`0 4px 20px ${G.green1}44`},
-  btnSell:{width:"100%",padding:"13px",borderRadius:6,fontWeight:700,fontSize:13,letterSpacing:2,textTransform:"uppercase",border:"none",transition:"all .18s",background:`linear-gradient(135deg, ${G.red}, #8b1a1a)`,color:G.cream,boxShadow:`0 4px 20px ${G.red}44`},
-  obHead:{display:"grid",gridTemplateColumns:"1fr 90px 70px 90px",gap:8,padding:"10px 0 8px",fontSize:9,color:G.textDim,letterSpacing:2,textTransform:"uppercase",fontWeight:700,borderBottom:`1px solid ${G.border}`},
-  obRow:{display:"grid",gridTemplateColumns:"1fr 90px 70px 90px",gap:8,padding:"10px 0",borderBottom:`1px solid ${G.border}22`,fontSize:12,alignItems:"center"},
-  toast:(v)=>({position:"fixed",bottom:28,right:28,zIndex:999,background:G.bgLight,border:`1px solid ${G.green1}`,borderLeft:`3px solid ${G.green2}`,borderRadius:6,padding:"14px 20px",fontSize:13,color:G.cream,fontWeight:600,boxShadow:"0 8px 32px #000a",opacity:v?1:0,transform:v?"translateY(0)":"translateY(16px)",transition:"all .3s",pointerEvents:"none"}),
-  txHead:{display:"grid",gridTemplateColumns:"90px 70px 1fr 100px 100px",gap:8,padding:"12px 20px",background:G.bgPanel,fontSize:9,color:G.textDim,letterSpacing:2,textTransform:"uppercase",fontWeight:700},
-  txRow:{display:"grid",gridTemplateColumns:"90px 70px 1fr 100px 100px",gap:8,padding:"12px 20px",borderTop:`1px solid ${G.border}22`,fontSize:12,alignItems:"center"},
-};
-
-// ── AUTH SCREEN ───────────────────────────────────────────────────────────
-function AuthScreen({onAuth}){
-  const [mode,setMode]=useState("login"); // login | register
-  const [name,setName]=useState("");
-  const [email,setEmail]=useState("");
-  const [pass,setPass]=useState("");
-  const [loading,setLoading]=useState(false);
-  const [error,setError]=useState("");
-
-  const handleSubmit = async () => {
-    setError(""); setLoading(true);
-    try {
-      if(mode==="register"){
-        if(!name.trim()) throw new Error("Ingresá tu nombre");
-        const cred = await auth.createUserWithEmailAndPassword(email,pass);
-        await cred.user.updateProfile({displayName:name.trim()});
-        // crear doc en Firestore con balance inicial
-        await db.collection("users").doc(cred.user.uid).set({
-          name:name.trim(), email,
-          balance:INITIAL_BALANCE,
-          txHistory:[],
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        });
-        onAuth(cred.user);
-      } else {
-        const cred = await auth.signInWithEmailAndPassword(email,pass);
-        onAuth(cred.user);
-      }
-    } catch(e){
-      const msgs = {
-        "auth/email-already-in-use":"Este email ya está registrado.",
-        "auth/invalid-email":"Email inválido.",
-        "auth/weak-password":"La contraseña debe tener al menos 6 caracteres.",
-        "auth/user-not-found":"Usuario no encontrado.",
-        "auth/wrong-password":"Contraseña incorrecta.",
-        "auth/invalid-credential":"Email o contraseña incorrectos.",
-      };
-      setError(msgs[e.code] || e.message);
-    }
-    setLoading(false);
-  };
-
-  return (
-    <div style={{minHeight:"100vh",background:G.bg,display:"flex",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
-      <BgPattern/>
-      <div style={{position:"relative",zIndex:1,width:"100%",maxWidth:420,padding:"0 20px"}}>
-        {/* logo */}
-        <div style={{textAlign:"center",marginBottom:36}}>
-          <div style={{fontSize:52,marginBottom:8}}>🐄</div>
-          <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:38,fontWeight:700,fontStyle:"italic",color:G.cream,lineHeight:1}}>PampaToken</div>
-          <div style={{fontSize:10,color:G.textDim,letterSpacing:3,textTransform:"uppercase",marginTop:6}}>Ganadería Digital · Argentina</div>
+// ===== TOKEN CARDS =====
+function renderTokenCards() {
+  const grid = document.getElementById('tokens-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  Object.entries(TOKENS).forEach(([key, t]) => {
+    const change = ((t.price - t.prev) / t.prev) * 100;
+    const isUp = change >= 0;
+    const card = document.createElement('div');
+    card.className = 'token-card';
+    card.id = `card-${key}`;
+    card.innerHTML = `
+      <div class="token-header">
+        <div>
+          <div class="token-name">${t.name}</div>
         </div>
-
-        {/* card */}
-        <div style={{background:G.bgCard,border:`1px solid ${G.border}`,borderRadius:12,padding:"32px 28px"}}>
-          {/* tabs */}
-          <div style={{display:"flex",gap:0,marginBottom:28,borderBottom:`1px solid ${G.border}`}}>
-            {[["login","Ingresar"],["register","Crear cuenta"]].map(([m,l])=>(
-              <button key={m} onClick={()=>{setMode(m);setError("");}}
-                style={{flex:1,padding:"10px",background:"transparent",border:"none",borderBottom:`2px solid ${mode===m?G.green2:"transparent"}`,color:mode===m?G.green2:G.creamDark,fontWeight:700,fontSize:13,letterSpacing:1,textTransform:"uppercase",transition:"all .18s",cursor:"pointer"}}>
-                {l}
-              </button>
-            ))}
-          </div>
-
-          {mode==="register" && (
-            <>
-              <label style={S.label}>Nombre</label>
-              <input style={S.input} type="text" placeholder="Juan Pérez" value={name} onChange={e=>setName(e.target.value)}/>
-            </>
-          )}
-          <label style={S.label}>Email</label>
-          <input style={S.input} type="email" placeholder="juan@campo.com" value={email} onChange={e=>setEmail(e.target.value)}/>
-          <label style={S.label}>Contraseña</label>
-          <input style={S.input} type="password" placeholder={mode==="register"?"Mínimo 6 caracteres":"••••••••"} value={pass} onChange={e=>setPass(e.target.value)}/>
-
-          {error && (
-            <div style={{fontSize:12,color:G.redLight,marginBottom:14,padding:"10px 12px",background:`${G.red}15`,borderRadius:6,borderLeft:`2px solid ${G.red}`}}>
-              {error}
-            </div>
-          )}
-
-          <button style={{...S.btnBuy,marginTop:4,opacity:loading?0.7:1}} onClick={handleSubmit} disabled={loading}>
-            {loading ? "Procesando..." : mode==="login" ? "Ingresar" : "Crear cuenta"}
-          </button>
-
-          {mode==="register" && (
-            <div style={{fontSize:10,color:G.textDim,marginTop:12,textAlign:"center",lineHeight:1.6}}>
-              Al registrarte recibís <strong style={{color:G.gold}}>USD 10,000</strong> en saldo de testnet para operar con los tres tokens ganaderos.
-            </div>
-          )}
-        </div>
-
-        <div style={{textAlign:"center",marginTop:16,fontSize:11,color:G.textDim}}>
-          Testnet · Simulación · No constituye asesoramiento financiero
-        </div>
+        <span class="token-ticker">${t.ticker}</span>
       </div>
-    </div>
-  );
+      <div class="token-price" id="price-${key}">${fmt(t.price)}</div>
+      <div class="token-change ${isUp ? 'up' : 'down'}" id="change-${key}">
+        ${isUp ? '▲' : '▼'} ${fmtPct(Math.abs(change))}
+      </div>
+      <div class="mini-chart">${renderSparkline(t.history, isUp)}</div>
+      <div class="token-actions">
+        <button class="btn-buy" onclick="openModal('${key}','buy')">Comprar</button>
+        <button class="btn-sell" onclick="openModal('${key}','sell')">Vender</button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
 }
 
-// ── APP PRINCIPAL ─────────────────────────────────────────────────────────
-function PampaToken(){
-  const [authUser, setAuthUser]       = useState(undefined); // undefined=cargando
-  const [userData, setUserData]       = useState(null);
-  const [page, setPage]               = useState("market");
-  const [selectedToken, setSelected]  = useState("HFORD");
-  const [prices, setPrices]           = useState(()=>Object.fromEntries(Object.keys(TOKENS).map(t=>[t,TOKENS[t].basePrice])));
-  const [histories, setHistories]     = useState(()=>Object.fromEntries(Object.keys(TOKENS).map(t=>[t,genHistory(TOKENS[t].basePrice)])));
-  const [changes, setChanges]         = useState(()=>Object.fromEntries(Object.keys(TOKENS).map(t=>[t,0])));
-  const [buyQty, setBuyQty]           = useState("");
-  const [sellQty, setSellQty]         = useState("");
-  const [toast, setToast]             = useState({vis:false,msg:""});
-  const [p2pOrders, setP2pOrders]     = useState(()=>Object.fromEntries(Object.keys(TOKENS).map(t=>[t,genOrders(t,TOKENS[t].basePrice)])));
-  const [p2pToken, setP2pToken]       = useState("HFORD");
-  const [p2pSide, setP2pSide]         = useState("buy");
-  const [p2pPrice, setP2pPrice]       = useState("");
-  const [p2pQty, setP2pQty]           = useState("");
-  const [p2pPayment, setP2pPayment]   = useState("Transferencia");
-  const [saving, setSaving]           = useState(false);
+// Actualización periódica cada 20 segundos
+setInterval(updateTokenPrices, 20000);
 
-  // ── AUTH LISTENER ─────────────────────────────────────────────────────
-  useEffect(()=>{
-    const unsub = auth.onAuthStateChanged(async user => {
-      if(user){
-        // cargar datos de Firestore
-        const doc = await db.collection("users").doc(user.uid).get();
-        if(doc.exists){
-          setUserData(doc.data());
-        } else {
-          // primera vez (Google signup, etc.)
-          const newData = {name:user.displayName||"Usuario",email:user.email,balance:INITIAL_BALANCE,txHistory:[]};
-          await db.collection("users").doc(user.uid).set(newData);
-          setUserData(newData);
-        }
-        setAuthUser(user);
-      } else {
-        setAuthUser(null);
-        setUserData(null);
-      }
+// ===== AUTH =====
+let currentUser = null;
+let userPortfolio = { cash: 100000, positions: {}, trades: [] };
+let orderbookUnsub = null;
+
+function switchTab(tab) {
+  document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+  document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+  document.getElementById('form-login').style.display = tab === 'login' ? 'flex' : 'none';
+  document.getElementById('form-register').style.display = tab === 'register' ? 'flex' : 'none';
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
+  try {
+    await window._fb.signInWithEmailAndPassword(window._fb.auth, email, pass);
+  } catch (e) {
+    errEl.textContent = 'Email o contraseña incorrectos.';
+    errEl.style.display = 'block';
+  }
+}
+
+async function doRegister() {
+  const email = document.getElementById('reg-email').value.trim();
+  const pass = document.getElementById('reg-pass').value;
+  const errEl = document.getElementById('reg-error');
+  errEl.style.display = 'none';
+  try {
+    const cred = await window._fb.createUserWithEmailAndPassword(window._fb.auth, email, pass);
+    await window._fb.setDoc(window._fb.doc(window._fb.db, 'users', cred.user.uid), {
+      email, cash: 100000, positions: {}, createdAt: window._fb.serverTimestamp()
     });
-    return ()=>unsub();
-  },[]);
-
-  // ── PRICE TICKER ──────────────────────────────────────────────────────
-  useEffect(()=>{
-    const iv=setInterval(()=>{
-      setPrices(prev=>{
-        const next={...prev},nc={};
-        Object.keys(TOKENS).forEach(t=>{
-          const d=(Math.random()-0.49)*prev[t]*0.004;
-          next[t]=Math.max(+(prev[t]+d).toFixed(2),1);
-          nc[t]=+((next[t]-TOKENS[t].basePrice)/TOKENS[t].basePrice*100).toFixed(2);
-        });
-        setChanges(nc);
-        return next;
-      });
-      setHistories(prev=>{
-        const next={...prev};
-        Object.keys(TOKENS).forEach(t=>{
-          const last=next[t][next[t].length-1];
-          const ch=(Math.random()-0.49)*last.close*0.018;
-          const open=last.close,close=Math.max(open+ch,1);
-          next[t]=[...next[t].slice(-89),{open,close,high:Math.max(open,close)*(1+Math.random()*.01),low:Math.min(open,close)*(1-Math.random()*.01),vol:Math.random()*3000+300}];
-        });
-        return next;
-      });
-    },2500);
-    return ()=>clearInterval(iv);
-  },[]);
-
-  const showToast = msg=>{setToast({vis:true,msg});setTimeout(()=>setToast({vis:false,msg:""}),3200);};
-
-  // guarda balance y tx en Firestore
-  const saveToCloud = async (newBalance, newTx) => {
-    if(!authUser) return;
-    setSaving(true);
-    try {
-      await db.collection("users").doc(authUser.uid).update({
-        balance: newBalance,
-        txHistory: newTx,
-      });
-      setUserData(prev=>({...prev,balance:newBalance,txHistory:newTx}));
-    } catch(e){ console.error(e); }
-    setSaving(false);
-  };
-
-  const handleBuy = async () => {
-    const qty=parseFloat(buyQty);
-    if(!qty||qty<=0) return showToast("⚠️ Ingresá una cantidad válida");
-    const total=qty*prices[selectedToken];
-    const bal = userData.balance;
-    if(total>bal.USD) return showToast("⚠️ Saldo USD insuficiente");
-    const newBal={...bal,USD:+(bal.USD-total).toFixed(2),[selectedToken]:+(bal[selectedToken]+qty).toFixed(4)};
-    const newTx=[{type:"BUY",token:selectedToken,qty,price:prices[selectedToken],total:+total.toFixed(2),ts:new Date().toLocaleTimeString()},...(userData.txHistory||[]).slice(0,49)];
-    setBuyQty("");
-    await saveToCloud(newBal,newTx);
-    showToast(`✅ Compraste ${qty} ${selectedToken} @ $${prices[selectedToken].toFixed(2)}`);
-  };
-
-  const handleSell = async () => {
-    const qty=parseFloat(sellQty);
-    if(!qty||qty<=0) return showToast("⚠️ Ingresá una cantidad válida");
-    const bal=userData.balance;
-    if(qty>bal[selectedToken]) return showToast("⚠️ Tokens insuficientes");
-    const total=qty*prices[selectedToken];
-    const newBal={...bal,USD:+(bal.USD+total).toFixed(2),[selectedToken]:+(bal[selectedToken]-qty).toFixed(4)};
-    const newTx=[{type:"SELL",token:selectedToken,qty,price:prices[selectedToken],total:+total.toFixed(2),ts:new Date().toLocaleTimeString()},...(userData.txHistory||[]).slice(0,49)];
-    setSellQty("");
-    await saveToCloud(newBal,newTx);
-    showToast(`✅ Vendiste ${qty} ${selectedToken} @ $${prices[selectedToken].toFixed(2)}`);
-  };
-
-  const handlePublishOrder = () => {
-    const price=parseFloat(p2pPrice),qty=parseFloat(p2pQty);
-    if(!price||!qty) return showToast("⚠️ Completá precio y cantidad");
-    const newOrder={id:`my-${Date.now()}`,user:`${userData.name} 🟢`,price,qty,payment:p2pPayment};
-    setP2pOrders(prev=>({...prev,[p2pToken]:{buys:p2pSide==="buy"?[newOrder,...prev[p2pToken].buys]:prev[p2pToken].buys,sells:p2pSide==="sell"?[newOrder,...prev[p2pToken].sells]:prev[p2pToken].sells}}));
-    setP2pPrice("");setP2pQty("");
-    showToast(`✅ Orden publicada: ${p2pSide.toUpperCase()} ${qty} ${p2pToken} @ $${price}`);
-  };
-
-  const handleLogout = async () => { await auth.signOut(); };
-
-  // ── LOADING ───────────────────────────────────────────────────────────
-  if(authUser === undefined){
-    return(
-      <div style={{minHeight:"100vh",background:G.bg,display:"flex",alignItems:"center",justifyContent:"center"}}>
-        <div style={{textAlign:"center"}}>
-          <div style={{fontSize:48,marginBottom:12}}>🐄</div>
-          <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:24,color:G.cream,fontStyle:"italic"}}>Cargando PampaToken...</div>
-        </div>
-      </div>
-    );
+  } catch (e) {
+    errEl.textContent = e.code === 'auth/email-already-in-use' ? 'El email ya está registrado.' : 'Error al registrarse. Intentá de nuevo.';
+    errEl.style.display = 'block';
   }
-
-  // ── AUTH SCREEN ───────────────────────────────────────────────────────
-  if(!authUser) return <AuthScreen onAuth={setAuthUser}/>;
-  if(!userData) return(
-    <div style={{minHeight:"100vh",background:G.bg,display:"flex",alignItems:"center",justifyContent:"center"}}>
-      <div style={{textAlign:"center",color:G.cream}}>Cargando tu portfolio...</div>
-    </div>
-  );
-
-  const token=TOKENS[selectedToken],price=prices[selectedToken],change=changes[selectedToken],candles=histories[selectedToken];
-  const bal=userData.balance||INITIAL_BALANCE;
-  const txHistory=userData.txHistory||[];
-  const portfolioUSD=bal.USD+Object.keys(TOKENS).reduce((a,t)=>a+bal[t]*prices[t],0);
-
-  return(
-    <div style={S.app}>
-      <BgPattern/>
-
-      {/* NAV */}
-      <nav style={S.nav}>
-        <div style={S.navLogo}>
-          <span style={{fontSize:32}}>🐄</span>
-          <div>PampaToken<span style={S.navLogoSub}>Ganadería Digital · Argentina</span></div>
-        </div>
-        <div style={{display:"flex",gap:6}}>
-          {[["market","📈 Mercado"],["p2p","🤝 P2P"],["portfolio","💼 Portfolio"]].map(([p,l])=>(
-            <button key={p} style={S.navLink(page===p)} onClick={()=>setPage(p)}>{l}</button>
-          ))}
-        </div>
-        <div style={{display:"flex",alignItems:"center",gap:14}}>
-          <span style={{fontSize:12,color:G.creamDim}}>
-            💵 <strong style={{color:G.cream}}>${bal.USD.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}</strong>
-          </span>
-          <span style={{fontSize:11,color:G.textDim}}>👤 {userData.name}</span>
-          {saving && <span style={{fontSize:10,color:G.gold,letterSpacing:1}}>guardando...</span>}
-          <button onClick={handleLogout} style={{padding:"5px 12px",background:"transparent",border:`1px solid ${G.border}`,borderRadius:4,color:G.creamDark,fontSize:11,letterSpacing:1,textTransform:"uppercase",cursor:"pointer"}}>Salir</button>
-          <span style={S.navBadge}>Testnet</span>
-        </div>
-      </nav>
-
-      {/* ── MARKET ── */}
-      {page==="market" && (
-        <div style={S.page}>
-          <h1 style={S.pageTitle}>Mercado de <em style={{color:G.green3}}>Tokens</em></h1>
-          <p style={S.subtitle}>Hacienda tokenizada · Precios en tiempo real · Simulación testnet</p>
-          <div style={S.divider}/>
-
-          <div style={{display:"flex",gap:14,marginBottom:28,flexWrap:"wrap"}}>
-            {Object.values(TOKENS).map(tk=>(
-              <div key={tk.ticker} style={S.tickerCard(selectedToken===tk.ticker,tk.color)} onClick={()=>setSelected(tk.ticker)}>
-                <div style={{position:"absolute",right:-8,bottom:-8,opacity:0.06}}><CowSVG size={70} opacity={1}/></div>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                  <span style={{fontSize:11,fontWeight:900,letterSpacing:2,color:tk.color,textTransform:"uppercase"}}>{tk.ticker}</span>
-                  <span style={{fontSize:18}}>{tk.icon}</span>
-                </div>
-                <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:26,fontWeight:700,color:G.cream,marginBottom:2}}>${prices[tk.ticker].toFixed(2)}</div>
-                <div style={{fontSize:11,fontWeight:700,color:changes[tk.ticker]>=0?G.green3:G.redLight,marginBottom:6}}>{changes[tk.ticker]>=0?"▲":"▼"} {Math.abs(changes[tk.ticker])}%</div>
-                <div style={{fontSize:10,color:G.creamDark,lineHeight:1.4}}>{tk.desc}</div>
-              </div>
-            ))}
-          </div>
-
-          <div style={{...S.card,padding:"22px 24px 14px",marginBottom:22}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}}>
-              <div>
-                <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:20,fontWeight:700,color:G.cream,fontStyle:"italic"}}>{token.name} <span style={{color:G.textDim,fontWeight:400,fontSize:15}}>/ USD</span></div>
-                <div style={{fontSize:9,color:G.textDim,letterSpacing:2,textTransform:"uppercase",marginTop:3}}>Velas 4h · Últimas 60 sesiones</div>
-              </div>
-              <div style={{textAlign:"right"}}>
-                <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:38,fontWeight:700,color:token.color,lineHeight:1}}>${price.toFixed(2)}</div>
-                <div style={{fontSize:11,color:G.textDim,marginTop:4}}>≈ ARS ${(price*ARS_RATE).toLocaleString("es-AR",{maximumFractionDigits:0})}</div>
-                <div style={{fontSize:11,fontWeight:700,marginTop:2,color:change>=0?G.green3:G.redLight}}>{change>=0?"▲":"▼"} {Math.abs(change)}% vs. precio base</div>
-              </div>
-            </div>
-            <CandleChart candles={candles} color={token.color} height={190}/>
-          </div>
-
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:24}}>
-            <div style={{...S.card,padding:22,borderColor:`${G.green1}44`}}>
-              <div style={{fontSize:11,fontWeight:900,letterSpacing:2,color:G.green3,marginBottom:18,textTransform:"uppercase"}}>▲ Comprar {selectedToken}</div>
-              <label style={S.label}>Cantidad</label>
-              <input style={S.input} type="number" placeholder="0.00" value={buyQty} onChange={e=>setBuyQty(e.target.value)}/>
-              <label style={S.label}>Precio market</label>
-              <input style={{...S.input,color:G.textDim,cursor:"default"}} readOnly value={`$${price.toFixed(2)} USD`}/>
-              <div style={{fontSize:11,color:G.creamDark,marginBottom:16,padding:"10px 12px",background:G.bgPanel,borderRadius:5,borderLeft:`2px solid ${G.green1}`}}>
-                Total: <strong style={{color:G.cream}}>${buyQty?((parseFloat(buyQty)||0)*price).toFixed(2):"—"}</strong>
-                <span style={{color:G.textDim}}> · Saldo: ${bal.USD.toFixed(2)}</span>
-              </div>
-              <button style={S.btnBuy} onClick={handleBuy}>Comprar {selectedToken}</button>
-            </div>
-            <div style={{...S.card,padding:22,borderColor:`${G.red}33`}}>
-              <div style={{fontSize:11,fontWeight:900,letterSpacing:2,color:G.redLight,marginBottom:18,textTransform:"uppercase"}}>▼ Vender {selectedToken}</div>
-              <label style={S.label}>Cantidad</label>
-              <input style={S.input} type="number" placeholder="0.00" value={sellQty} onChange={e=>setSellQty(e.target.value)}/>
-              <label style={S.label}>Precio market</label>
-              <input style={{...S.input,color:G.textDim,cursor:"default"}} readOnly value={`$${price.toFixed(2)} USD`}/>
-              <div style={{fontSize:11,color:G.creamDark,marginBottom:16,padding:"10px 12px",background:G.bgPanel,borderRadius:5,borderLeft:`2px solid ${G.red}`}}>
-                Total: <strong style={{color:G.cream}}>${sellQty?((parseFloat(sellQty)||0)*price).toFixed(2):"—"}</strong>
-                <span style={{color:G.textDim}}> · Tenés: {bal[selectedToken]} {selectedToken}</span>
-              </div>
-              <button style={S.btnSell} onClick={handleSell}>Vender {selectedToken}</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── P2P ── */}
-      {page==="p2p" && (
-        <div style={S.page}>
-          <h1 style={S.pageTitle}>Mercado <em style={{color:G.green3}}>P2P</em></h1>
-          <p style={S.subtitle}>Operá directamente con productores e inversores · Publicá tus órdenes</p>
-          <div style={S.divider}/>
-          <div style={{display:"flex",gap:10,marginBottom:24,alignItems:"center",flexWrap:"wrap"}}>
-            {Object.values(TOKENS).map(tk=>(
-              <button key={tk.ticker} onClick={()=>setP2pToken(tk.ticker)}
-                style={{padding:"8px 22px",borderRadius:5,fontSize:12,fontWeight:700,letterSpacing:1.5,textTransform:"uppercase",transition:"all .18s",background:p2pToken===tk.ticker?`${tk.color}25`:"transparent",border:`1px solid ${p2pToken===tk.ticker?tk.color:G.border}`,color:p2pToken===tk.ticker?tk.color:G.creamDark}}>
-                {tk.icon} {tk.ticker}
-              </button>
-            ))}
-            <div style={{marginLeft:"auto",fontSize:11,color:G.textDim}}>
-              Spread: <strong style={{color:G.gold,fontSize:13}}>{p2pOrders[p2pToken].sells[0]&&p2pOrders[p2pToken].buys[0]?`$${(p2pOrders[p2pToken].sells[0].price-p2pOrders[p2pToken].buys[0].price).toFixed(2)}`:"—"}</strong>
-            </div>
-          </div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}}>
-            <div>
-              <div style={{...S.card,padding:"18px 20px",marginBottom:14}}>
-                <div style={{fontSize:11,fontWeight:900,letterSpacing:2,color:G.redLight,marginBottom:12,textTransform:"uppercase"}}>▼ Vendedores · {p2pToken}</div>
-                <div style={S.obHead}><span>Usuario</span><span>Precio</span><span>Cant.</span><span>Método</span></div>
-                {p2pOrders[p2pToken].sells.slice(0,7).map(o=>(
-                  <div key={o.id} style={S.obRow}>
-                    <span style={{color:G.textDim,fontSize:11}}>{o.user}</span>
-                    <span style={{color:G.redLight,fontWeight:700}}>${o.price.toFixed(2)}</span>
-                    <span style={{color:G.cream}}>{o.qty}</span>
-                    <span style={{fontSize:10,color:G.creamDark}}>{o.payment}</span>
-                  </div>
-                ))}
-              </div>
-              <div style={{...S.card,padding:"18px 20px"}}>
-                <div style={{fontSize:11,fontWeight:900,letterSpacing:2,color:G.green3,marginBottom:12,textTransform:"uppercase"}}>▲ Compradores · {p2pToken}</div>
-                <div style={S.obHead}><span>Usuario</span><span>Precio</span><span>Cant.</span><span>Método</span></div>
-                {p2pOrders[p2pToken].buys.slice(0,7).map(o=>(
-                  <div key={o.id} style={S.obRow}>
-                    <span style={{color:G.textDim,fontSize:11}}>{o.user}</span>
-                    <span style={{color:G.green3,fontWeight:700}}>${o.price.toFixed(2)}</span>
-                    <span style={{color:G.cream}}>{o.qty}</span>
-                    <span style={{fontSize:10,color:G.creamDark}}>{o.payment}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div style={{...S.card,padding:"22px 24px"}}>
-              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:20,fontWeight:700,fontStyle:"italic",color:G.cream,marginBottom:18}}>Publicar Orden P2P</div>
-              <div style={{display:"flex",gap:8,marginBottom:18}}>
-                {["buy","sell"].map(side=>(
-                  <button key={side} onClick={()=>setP2pSide(side)}
-                    style={{flex:1,padding:"10px",borderRadius:5,fontWeight:700,fontSize:12,letterSpacing:1.5,textTransform:"uppercase",transition:"all .18s",border:`1px solid ${p2pSide===side?(side==="buy"?G.green1:G.red):G.border}`,background:p2pSide===side?(side==="buy"?`${G.green1}25`:`${G.red}25`):"transparent",color:p2pSide===side?(side==="buy"?G.green3:G.redLight):G.creamDark}}>
-                    {side==="buy"?"▲ Comprar":"▼ Vender"}
-                  </button>
-                ))}
-              </div>
-              <label style={S.label}>Token</label>
-              <select style={S.select} value={p2pToken} onChange={e=>setP2pToken(e.target.value)}>
-                {Object.values(TOKENS).map(tk=><option key={tk.ticker} value={tk.ticker}>{tk.icon} {tk.name} ({tk.ticker})</option>)}
-              </select>
-              <label style={S.label}>Precio (USD)</label>
-              <input style={S.input} type="number" placeholder={`~${prices[p2pToken].toFixed(2)}`} value={p2pPrice} onChange={e=>setP2pPrice(e.target.value)}/>
-              <label style={S.label}>Cantidad</label>
-              <input style={S.input} type="number" placeholder="0" value={p2pQty} onChange={e=>setP2pQty(e.target.value)}/>
-              <label style={S.label}>Método de pago</label>
-              <select style={S.select} value={p2pPayment} onChange={e=>setP2pPayment(e.target.value)}>
-                {["Transferencia","Wise","USDT","Efectivo","Crypto"].map(m=><option key={m}>{m}</option>)}
-              </select>
-              {p2pPrice&&p2pQty&&(
-                <div style={{fontSize:11,color:G.creamDark,marginBottom:14,padding:"12px 14px",background:G.bgPanel,borderRadius:5,borderLeft:`2px solid ${G.gold}`}}>
-                  Total: <strong style={{color:G.cream}}>${(parseFloat(p2pPrice)*parseFloat(p2pQty)).toFixed(2)}</strong><br/>
-                  ≈ ARS ${((parseFloat(p2pPrice)*parseFloat(p2pQty))*ARS_RATE).toLocaleString("es-AR",{maximumFractionDigits:0})}
-                </div>
-              )}
-              <button style={p2pSide==="buy"?S.btnBuy:S.btnSell} onClick={handlePublishOrder}>Publicar Orden</button>
-              <div style={{fontSize:9,color:G.textDim,marginTop:10,textAlign:"center",letterSpacing:1}}>Las órdenes son visibles para todos los participantes</div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── PORTFOLIO ── */}
-      {page==="portfolio" && (
-        <div style={S.page}>
-          <h1 style={S.pageTitle}>Mi <em style={{color:G.green3}}>Portfolio</em></h1>
-          <p style={S.subtitle}>Posición actual · {userData.name} · Testnet PampaToken</p>
-          <div style={S.divider}/>
-
-          <div style={{...S.card,padding:"28px 32px",marginBottom:24,background:`linear-gradient(135deg, ${G.bgLight}, ${G.bgCard})`,borderColor:G.borderLight,position:"relative",overflow:"hidden"}}>
-            <div style={{position:"absolute",right:-20,top:-20,opacity:0.04}}><CowSVG size={140} opacity={1}/></div>
-            <div style={{fontSize:9,color:G.textDim,letterSpacing:3,textTransform:"uppercase",marginBottom:8}}>Valor Total del Portfolio</div>
-            <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:52,fontWeight:700,color:G.cream,lineHeight:1}}>${portfolioUSD.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
-            <div style={{fontSize:12,color:G.textDim,marginTop:8}}>≈ ARS ${(portfolioUSD*ARS_RATE).toLocaleString("es-AR",{maximumFractionDigits:0})}</div>
-          </div>
-
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:16,marginBottom:28}}>
-            <div style={{...S.card,padding:"20px 22px",borderTop:`3px solid ${G.cream}`}}>
-              <div style={{fontSize:9,color:G.textDim,letterSpacing:2,textTransform:"uppercase",marginBottom:10}}>💵 Saldo Cash</div>
-              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:32,fontWeight:700,color:G.cream}}>${bal.USD.toFixed(2)}</div>
-              <div style={{fontSize:11,color:G.textDim,marginTop:4}}>≈ ARS ${(bal.USD*ARS_RATE).toLocaleString("es-AR",{maximumFractionDigits:0})}</div>
-            </div>
-            {Object.values(TOKENS).map(tk=>(
-              <div key={tk.ticker} style={{...S.card,padding:"20px 22px",borderTop:`3px solid ${tk.color}`,position:"relative",overflow:"hidden"}}>
-                <div style={{position:"absolute",right:-5,bottom:-5,opacity:0.05}}><CowSVG size={60} opacity={1}/></div>
-                <div style={{fontSize:9,color:G.textDim,letterSpacing:2,textTransform:"uppercase",marginBottom:10}}>{tk.icon} {tk.ticker}</div>
-                <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:32,fontWeight:700,color:G.cream}}>{bal[tk.ticker].toLocaleString()}</div>
-                <div style={{fontSize:11,color:G.textDim,marginBottom:8}}>{tk.name}</div>
-                <div style={{fontSize:18,fontWeight:700,color:tk.color}}>${(bal[tk.ticker]*prices[tk.ticker]).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
-                <div style={{fontSize:10,color:G.creamDark,marginTop:2}}>@ ${prices[tk.ticker].toFixed(2)} / token</div>
-              </div>
-            ))}
-          </div>
-
-          <div style={{marginBottom:28}}>
-            <div style={{fontSize:10,color:G.textDim,letterSpacing:2,textTransform:"uppercase",marginBottom:14,fontWeight:700}}>Evolución de Precios</div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:14}}>
-              {Object.values(TOKENS).map(tk=>(
-                <div key={tk.ticker} style={{...S.card,padding:"14px 16px"}}>
-                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
-                    <span style={{fontSize:12,fontWeight:700,color:tk.color,letterSpacing:1}}>{tk.icon} {tk.ticker}</span>
-                    <span style={{fontSize:12,color:G.cream}}>${prices[tk.ticker].toFixed(2)}</span>
-                  </div>
-                  <CandleChart candles={histories[tk.ticker]} color={tk.color} height={80}/>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {txHistory.length>0?(
-            <div>
-              <div style={{fontSize:10,color:G.textDim,letterSpacing:2,textTransform:"uppercase",marginBottom:12,fontWeight:700}}>Historial de Transacciones</div>
-              <div style={{...S.card,overflow:"hidden"}}>
-                <div style={S.txHead}><span>Hora</span><span>Tipo</span><span>Token</span><span>Precio</span><span>Total USD</span></div>
-                {txHistory.map((tx,i)=>(
-                  <div key={i} style={S.txRow}>
-                    <span style={{color:G.textDim}}>{tx.ts}</span>
-                    <span style={{color:tx.type==="BUY"?G.green3:G.redLight,fontWeight:700,fontSize:11,letterSpacing:1}}>{tx.type}</span>
-                    <span style={{color:G.cream}}>{tx.qty} {tx.token}</span>
-                    <span style={{color:G.textDim}}>${tx.price.toFixed(2)}</span>
-                    <span style={{color:tx.type==="BUY"?G.redLight:G.green3,fontWeight:700}}>{tx.type==="BUY"?"-":"+"}${tx.total.toFixed(2)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ):(
-            <div style={{textAlign:"center",padding:"40px 20px",color:G.textDim,fontSize:13}}>
-              Aún no realizaste transacciones. <span style={{color:G.green3,cursor:"pointer"}} onClick={()=>setPage("market")}>Ir al Mercado →</span>
-            </div>
-          )}
-        </div>
-      )}
-
-      <footer style={{borderTop:`1px solid ${G.border}`,padding:"20px 36px",display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:10,color:G.textDim,letterSpacing:1,position:"relative",zIndex:1,textTransform:"uppercase"}}>
-        <span>🐄 PampaToken · Ganadería Digital Argentina · © 2025</span>
-        <span>1 USD = ARS {ARS_RATE.toLocaleString("es-AR")} (ficticio) · No constituyen asesoramiento financiero</span>
-      </footer>
-
-      <div style={S.toast(toast.vis)}>{toast.msg}</div>
-    </div>
-  );
 }
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(React.createElement(PampaToken));
+async function doSignOut() {
+  await window._fb.signOut(window._fb.auth);
+}
+
+window._fb.onAuthStateChanged(window._fb.auth, async user => {
+  currentUser = user;
+  if (user) {
+    document.getElementById('auth-wall').style.display = 'none';
+    document.getElementById('simulator-app').style.display = 'block';
+    document.getElementById('user-email-display').textContent = user.email;
+    await loadPortfolio(user.uid);
+    subscribeOrderbook();
+    renderTokenCards();
+    updatePortfolioStats();
+    renderHistory();
+  } else {
+    document.getElementById('auth-wall').style.display = 'block';
+    document.getElementById('simulator-app').style.display = 'none';
+    if (orderbookUnsub) { orderbookUnsub(); orderbookUnsub = null; }
+  }
+});
+
+async function loadPortfolio(uid) {
+  const snap = await window._fb.getDoc(window._fb.doc(window._fb.db, 'users', uid));
+  if (snap.exists()) {
+    const d = snap.data();
+    userPortfolio.cash = d.cash ?? 100000;
+    userPortfolio.positions = d.positions ?? {};
+  }
+  // Historial de trades
+  const q = window._fb.query(
+    window._fb.collection(window._fb.db, 'trades'),
+    window._fb.where('uid', '==', uid),
+    window._fb.orderBy('createdAt', 'desc')
+  );
+  const snap2 = await window._fb.getDocs(q);
+  userPortfolio.trades = snap2.docs.map(d => ({ id: d.id, ...d.data() }));
+  updatePortfolioStats();
+  renderPositions();
+  renderHistory();
+}
+
+// ===== PORTFOLIO STATS =====
+function updatePortfolioStats() {
+  if (!currentUser) return;
+  let portfolioValue = userPortfolio.cash;
+  Object.entries(userPortfolio.positions || {}).forEach(([tok, qty]) => {
+    if (TOKENS[tok]) portfolioValue += qty * TOKENS[tok].price;
+  });
+  const invested = Object.entries(userPortfolio.positions || {}).reduce((acc, [tok, qty]) => {
+    return acc + (userPortfolio[`avgCost_${tok}`] ?? TOKENS[tok]?.price ?? 0) * qty;
+  }, 0);
+  const pnl = portfolioValue - 100000;
+
+  document.getElementById('stat-cash').textContent = fmt(userPortfolio.cash);
+  document.getElementById('stat-portfolio').textContent = fmt(portfolioValue);
+  const pnlEl = document.getElementById('stat-pnl');
+  pnlEl.textContent = fmt(pnl);
+  pnlEl.className = 'val ' + (pnl >= 0 ? 'pos' : 'neg');
+}
+
+// ===== POSITIONS =====
+function renderPositions() {
+  const el = document.getElementById('positions-container');
+  const positions = Object.entries(userPortfolio.positions || {}).filter(([,q]) => q > 0);
+  if (!positions.length) {
+    el.innerHTML = '<div class="no-positions">Todavía no tenés posiciones abiertas.</div>'; return;
+  }
+  let html = `<table class="positions-table">
+    <thead><tr><th>Token</th><th>Cantidad</th><th>Precio actual</th><th>Valor</th></tr></thead><tbody>`;
+  positions.forEach(([tok, qty]) => {
+    const t = TOKENS[tok];
+    if (!t) return;
+    const val = qty * t.price;
+    html += `<tr><td>${t.name} <span style="color:var(--dorado);font-size:0.65rem">${t.ticker}</span></td>
+      <td>${qty}</td><td>${fmt(t.price)}</td><td>${fmt(val)}</td></tr>`;
+  });
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
+
+// ===== HISTORY =====
+function renderHistory() {
+  const el = document.getElementById('history-container');
+  const trades = userPortfolio.trades || [];
+  if (!trades.length) {
+    el.innerHTML = '<div class="ob-empty">Todavía no realizaste operaciones.</div>'; return;
+  }
+  const html = trades.slice(0, 20).map(t => {
+    const tok = TOKENS[t.token];
+    return `<div class="history-item">
+      <div class="hi-left">
+        <span class="hi-badge ${t.type}">${t.type === 'buy' ? 'Compra' : 'Venta'}</span>
+        <span class="hi-token">${tok?.name ?? t.token}</span>
+        <span class="hi-detail">${t.qty} × ${fmt(t.price)}</span>
+      </div>
+      <span class="hi-amount">${fmt(t.total)}</span>
+    </div>`;
+  }).join('');
+  el.innerHTML = `<div class="history-list">${html}</div>`;
+}
+
+// ===== ORDER BOOK =====
+function subscribeOrderbook() {
+  const q = window._fb.query(
+    window._fb.collection(window._fb.db, 'orders'),
+    window._fb.where('status', '==', 'open'),
+    window._fb.orderBy('createdAt', 'desc')
+  );
+  orderbookUnsub = window._fb.onSnapshot(q, snap => {
+    const orders = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderOrderbook(orders);
+    matchOrders(orders);
+  });
+}
+
+function renderOrderbook(orders) {
+  const el = document.getElementById('orderbook-list');
+  if (!orders.length) {
+    el.innerHTML = '<div class="ob-empty">No hay órdenes abiertas.</div>'; return;
+  }
+  el.innerHTML = orders.slice(0, 12).map(o => {
+    const tok = TOKENS[o.token];
+    return `<div class="ob-row ${o.type}">
+      <span class="col-type">${o.type === 'buy' ? 'Compra' : 'Venta'}</span>
+      <span class="col-token">${tok?.ticker ?? o.token}</span>
+      <span class="col-price">${fmt(o.price)}</span>
+      <span class="col-qty">${o.qty}</span>
+    </div>`;
+  }).join('');
+}
+
+// ===== ORDER MATCHING =====
+async function matchOrders(orders) {
+  const buys = orders.filter(o => o.type === 'buy');
+  const sells = orders.filter(o => o.type === 'sell');
+  for (const buy of buys) {
+    const match = sells.find(s => s.token === buy.token && s.price <= buy.price && s.uid !== buy.uid);
+    if (!match) continue;
+    const price = (buy.price + match.price) / 2;
+    const qty = Math.min(buy.qty, match.qty);
+    await executeMatch(buy, match, price, qty);
+  }
+}
+
+async function executeMatch(buy, sell, price, qty) {
+  const db = window._fb.db;
+  try {
+    const buySnap = await window._fb.getDoc(window._fb.doc(db, 'users', buy.uid));
+    const sellSnap = await window._fb.getDoc(window._fb.doc(db, 'users', sell.uid));
+    if (!buySnap.exists() || !sellSnap.exists()) return;
+    const buyData = buySnap.data();
+    const sellData = sellSnap.data();
+    const total = price * qty;
+    // Buyer
+    const buyPos = { ...(buyData.positions || {}) };
+    buyPos[buy.token] = (buyPos[buy.token] || 0) + qty;
+    await window._fb.updateDoc(window._fb.doc(db, 'users', buy.uid), { cash: buyData.cash - total, positions: buyPos });
+    // Seller
+    const sellPos = { ...(sellData.positions || {}) };
+    sellPos[sell.token] = Math.max(0, (sellPos[sell.token] || 0) - qty);
+    await window._fb.updateDoc(window._fb.doc(db, 'users', sell.uid), { cash: sellData.cash + total, positions: sellPos });
+    // Remove/update orders
+    if (buy.qty === qty) await window._fb.deleteDoc(window._fb.doc(db, 'orders', buy.id));
+    else await window._fb.updateDoc(window._fb.doc(db, 'orders', buy.id), { qty: buy.qty - qty });
+    if (sell.qty === qty) await window._fb.deleteDoc(window._fb.doc(db, 'orders', sell.id));
+    else await window._fb.updateDoc(window._fb.doc(db, 'orders', sell.id), { qty: sell.qty - qty });
+    // Record trades
+    const tradeBase = { token: buy.token, price, qty, total, createdAt: window._fb.serverTimestamp() };
+    await window._fb.addDoc(window._fb.collection(db, 'trades'), { ...tradeBase, uid: buy.uid, type: 'buy' });
+    await window._fb.addDoc(window._fb.collection(db, 'trades'), { ...tradeBase, uid: sell.uid, type: 'sell' });
+    // Reload if current user is involved
+    if (currentUser && (buy.uid === currentUser.uid || sell.uid === currentUser.uid)) {
+      await loadPortfolio(currentUser.uid);
+    }
+  } catch(e) { console.error('Match error', e); }
+}
+
+// ===== ORDER FORM =====
+function updateOrderTotal() {
+  const tok = document.getElementById('order-token')?.value;
+  const qty = parseFloat(document.getElementById('order-qty')?.value) || 0;
+  const customPrice = parseFloat(document.getElementById('order-price')?.value);
+  const price = customPrice || (TOKENS[tok]?.price ?? 0);
+  const el = document.getElementById('order-total-display');
+  if (el) el.textContent = qty > 0 ? fmt(qty * price) : '—';
+}
+
+async function submitOrder() {
+  if (!currentUser) return;
+  const token = document.getElementById('order-token').value;
+  const type = document.getElementById('order-type').value;
+  const qty = parseInt(document.getElementById('order-qty').value) || 0;
+  const customPrice = parseFloat(document.getElementById('order-price').value);
+  const price = customPrice || TOKENS[token].price;
+
+  if (qty <= 0) return;
+  if (type === 'buy') {
+    const total = price * qty;
+    if (total > userPortfolio.cash) { alert('Saldo insuficiente.'); return; }
+    // Market order: execute immediately
+    const snap = await window._fb.getDoc(window._fb.doc(window._fb.db, 'users', currentUser.uid));
+    const data = snap.data();
+    const pos = { ...(data.positions || {}) };
+    pos[token] = (pos[token] || 0) + qty;
+    await window._fb.updateDoc(window._fb.doc(window._fb.db, 'users', currentUser.uid), {
+      cash: data.cash - total, positions: pos
+    });
+    await window._fb.addDoc(window._fb.collection(window._fb.db, 'trades'), {
+      uid: currentUser.uid, token, type: 'buy', price, qty, total, createdAt: window._fb.serverTimestamp()
+    });
+    await loadPortfolio(currentUser.uid);
+  } else {
+    const holding = userPortfolio.positions[token] || 0;
+    if (qty > holding) { alert('No tenés suficientes tokens para vender.'); return; }
+    const total = price * qty;
+    const snap = await window._fb.getDoc(window._fb.doc(window._fb.db, 'users', currentUser.uid));
+    const data = snap.data();
+    const pos = { ...(data.positions || {}) };
+    pos[token] = Math.max(0, (pos[token] || 0) - qty);
+    await window._fb.updateDoc(window._fb.doc(window._fb.db, 'users', currentUser.uid), {
+      cash: data.cash + total, positions: pos
+    });
+    await window._fb.addDoc(window._fb.collection(window._fb.db, 'trades'), {
+      uid: currentUser.uid, token, type: 'sell', price, qty, total, createdAt: window._fb.serverTimestamp()
+    });
+    await loadPortfolio(currentUser.uid);
+  }
+  document.getElementById('order-qty').value = 1;
+  document.getElementById('order-price').value = '';
+  updateOrderTotal();
+}
+
+// ===== MODAL (quick buy/sell from cards) =====
+let modalState = { token: null, type: null };
+
+function openModal(token, type) {
+  if (!currentUser) { document.getElementById('simulador').scrollIntoView({ behavior: 'smooth' }); return; }
+  modalState = { token, type };
+  const t = TOKENS[token];
+  document.getElementById('modal-title').textContent = (type === 'buy' ? 'Comprar ' : 'Vender ') + t.name;
+  document.getElementById('modal-sub').textContent = type === 'buy' ? 'Orden de compra a precio de mercado' : 'Orden de venta a precio de mercado';
+  document.getElementById('modal-qty').value = 1;
+  document.getElementById('ms-token').textContent = `${t.name} (${t.ticker})`;
+  document.getElementById('ms-price').textContent = fmt(t.price);
+  document.getElementById('ms-qty').textContent = 1;
+  document.getElementById('ms-total').textContent = fmt(t.price);
+  const confirmBtn = document.getElementById('modal-confirm-btn');
+  confirmBtn.className = type === 'buy' ? 'btn-confirm-buy' : 'btn-confirm-sell';
+  confirmBtn.textContent = type === 'buy' ? 'Confirmar compra' : 'Confirmar venta';
+  document.getElementById('modal-error').style.display = 'none';
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+
+function updateModalTotal() {
+  const qty = parseInt(document.getElementById('modal-qty').value) || 0;
+  const price = TOKENS[modalState.token]?.price ?? 0;
+  document.getElementById('ms-qty').textContent = qty;
+  document.getElementById('ms-total').textContent = fmt(qty * price);
+}
+
+async function confirmOrder() {
+  const { token, type } = modalState;
+  const qty = parseInt(document.getElementById('modal-qty').value) || 0;
+  const errEl = document.getElementById('modal-error');
+  errEl.style.display = 'none';
+  if (qty <= 0) { errEl.textContent = 'Ingresá una cantidad válida.'; errEl.style.display = 'block'; return; }
+  const price = TOKENS[token].price;
+  const total = price * qty;
+  if (type === 'buy' && total > userPortfolio.cash) {
+    errEl.textContent = 'Saldo insuficiente.'; errEl.style.display = 'block'; return;
+  }
+  if (type === 'sell' && qty > (userPortfolio.positions[token] || 0)) {
+    errEl.textContent = 'No tenés suficientes tokens.'; errEl.style.display = 'block'; return;
+  }
+  closeModal();
+  const snap = await window._fb.getDoc(window._fb.doc(window._fb.db, 'users', currentUser.uid));
+  const data = snap.data();
+  const pos = { ...(data.positions || {}) };
+  let newCash;
+  if (type === 'buy') {
+    pos[token] = (pos[token] || 0) + qty;
+    newCash = data.cash - total;
+  } else {
+    pos[token] = Math.max(0, (pos[token] || 0) - qty);
+    newCash = data.cash + total;
+  }
+  await window._fb.updateDoc(window._fb.doc(window._fb.db, 'users', currentUser.uid), { cash: newCash, positions: pos });
+  await window._fb.addDoc(window._fb.collection(window._fb.db, 'trades'), {
+    uid: currentUser.uid, token, type, price, qty, total, createdAt: window._fb.serverTimestamp()
+  });
+  await loadPortfolio(currentUser.uid);
+}
+
+// Close modal on overlay click
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+});
+
+// Initial render
+renderTokenCards();
+updateOrderTotal();
 </script>
 </body>
 </html>
