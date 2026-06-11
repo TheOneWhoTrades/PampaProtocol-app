@@ -209,9 +209,56 @@ body { background: #1a3a2a; font-family: 'Montserrat', sans-serif; overflow-x: h
 .fi { opacity: 0; transform: translateY(18px); transition: opacity .7s ease, transform .7s ease; }
 .fi.vis { opacity: 1; transform: none; }
 
+/* ── WAITLIST ────────────────────────────────────── */
+#waitlist {
+  padding: 7rem 2rem;
+  background: linear-gradient(180deg, rgba(10,22,14,.7) 0%, rgba(26,58,42,.4) 100%);
+  border-top: 1px solid rgba(201,168,76,.12);
+  border-bottom: 1px solid rgba(201,168,76,.12);
+  text-align: center;
+}
+.waitlist-inner { max-width: 560px; margin: 0 auto; }
+.waitlist-inner .section-title { margin-bottom: .6rem; }
+.waitlist-inner .section-body { margin: 0 auto 2.8rem; }
+.waitlist-form {
+  display: flex; gap: .6rem; flex-wrap: wrap; justify-content: center;
+  margin-bottom: 1rem; max-width: 480px; margin-left: auto; margin-right: auto;
+}
+.waitlist-input {
+  font-family: 'Montserrat', sans-serif;
+  font-size: .74rem; font-weight: 400; letter-spacing: .02em;
+  background: rgba(26,42,26,.8); color: #f5f0e8;
+  border: 1px solid rgba(201,168,76,.28);
+  padding: .65rem 1rem; flex: 1 1 200px; min-width: 180px;
+  outline: none; transition: border-color .22s;
+}
+.waitlist-input::placeholder { color: rgba(245,240,232,.3); }
+.waitlist-input:focus { border-color: #c9a84c; }
+.waitlist-btn {
+  font-family: 'Montserrat', sans-serif;
+  font-size: .62rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase;
+  background: #c9a84c; color: #1a3a2a;
+  border: none; padding: .65rem 1.6rem; cursor: pointer;
+  transition: all .26s; white-space: nowrap; flex-shrink: 0;
+}
+.waitlist-btn:hover:not(:disabled) { background: #e2c97e; transform: translateY(-1px); }
+.waitlist-btn:disabled { opacity: .6; cursor: not-allowed; }
+.waitlist-msg {
+  font-size: .72rem; font-weight: 500; letter-spacing: .04em;
+  padding: .7rem 1.4rem; border-radius: 2px; display: none;
+}
+.waitlist-msg.ok  { display:block; background:rgba(90,143,60,.15); color:#a8d470; border:1px solid rgba(90,143,60,.3); }
+.waitlist-msg.err { display:block; background:rgba(192,57,43,.12); color:#e74c3c; border:1px solid rgba(192,57,43,.3); }
+.waitlist-disclaimer {
+  font-size: .62rem; color: rgba(245,240,232,.35);
+  letter-spacing: .05em; margin-top: .8rem;
+}
+
 @media (max-width: 600px) {
   #land-nav { padding: .9rem 1.4rem; }
   #hero h1 { font-size: 2.8rem; }
+  .waitlist-form { flex-direction: column; }
+  .waitlist-input, .waitlist-btn { width: 100%; }
 }
 </style>
 </head>
@@ -224,6 +271,7 @@ body { background: #1a3a2a; font-family: 'Montserrat', sans-serif; overflow-x: h
 <!-- NAV -->
 <nav id="land-nav">
   <a href="#" class="land-logo">Pampa<span>Token</span></a>
+  <a href="#waitlist" class="land-nav-cta" style="margin-right:.5rem;background:rgba(201,168,76,.08)">Acceso anticipado</a>
   <a href="#simulador" class="land-nav-cta">Probar simulador</a>
 </nav>
 
@@ -301,17 +349,72 @@ body { background: #1a3a2a; font-family: 'Montserrat', sans-serif; overflow-x: h
 
 <div class="ornament" style="padding-top:2rem"><div class="orn-line"></div><div class="orn-diamond"></div><div class="orn-line"></div></div>
 
-<!-- HEADER SIMULADOR -->
-<div id="sim-header" class="fi" id="simulador">
-  <span class="section-eyebrow">Simulador de trading</span>
-  <h2 class="section-title" style="text-align:center">Operá los tokens<br><em>en tiempo real</em></h2>
-  <p class="section-body" style="margin:0 auto;text-align:center">Los precios siguen el índice INMAG y se actualizan cada 20 segundos. Practicá sin riesgo antes de invertir capital real.</p>
+<!-- WAITLIST -->
+<section id="waitlist" class="fi">
+  <div class="waitlist-inner">
+    <span class="section-eyebrow">Acceso anticipado</span>
+    <h2 class="section-title">Registrate para<br><em>acceder antes que nadie</em></h2>
+    <p class="section-body">PampaToken lanza su primera ronda de inversión en hacienda tokenizada. Anotate en la lista de espera y te avisamos primero.</p>
+    <div class="waitlist-form">
+      <input class="waitlist-input" id="wl-email" type="email" placeholder="Tu email" autocomplete="email"/>
+      <button class="waitlist-btn" id="wl-btn" onclick="submitWaitlist()">Quiero acceso anticipado</button>
+    </div>
+    <div class="waitlist-msg" id="wl-msg"></div>
+    <p class="waitlist-disclaimer">Sin spam. Solo te contactamos cuando abramos la plataforma.</p>
+  </div>
+</section>
+
+<div class="ornament" style="padding-top:2rem"><div class="orn-line"></div><div class="orn-diamond"></div><div class="orn-line"></div></div>
+<div id="simulador">
+  <div id="sim-header" class="fi">
+    <span class="section-eyebrow">Simulador de trading</span>
+    <h2 class="section-title" style="text-align:center">Operá los tokens<br><em>en tiempo real</em></h2>
+  </div>
+  <div id="root"></div>
 </div>
 
-<!-- ════════════════════════════════════════════════════ -->
-<!-- SIMULADOR (React — código original adaptado)         -->
-<!-- ════════════════════════════════════════════════════ -->
-<div id="root"></div>
+<!-- WAITLIST -->
+<script>
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxhXSM91hDmVwJhueojQ_q4TNYYCHSXy8IT_q4LuKMtNa-W6F49tt9mo9JspgQPiUL-Ig/exec";
+
+async function submitWaitlist(){
+  const emailEl = document.getElementById("wl-email");
+  const btn     = document.getElementById("wl-btn");
+  const msg     = document.getElementById("wl-msg");
+
+  const email = emailEl.value.trim();
+
+  msg.className = "waitlist-msg";
+  msg.textContent = "";
+
+  if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ emailEl.focus(); return showWlMsg("Por favor ingresá un email válido.", false); }
+
+  btn.disabled = true;
+  btn.textContent = "Enviando...";
+
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, timestamp: new Date().toISOString(), origen: "landing-pampatoken" })
+    });
+    emailEl.value = "";
+    btn.textContent = "¡Listo!";
+    showWlMsg("✅ ¡Estás en la lista! Te avisamos cuando abramos.", true);
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = "Quiero acceso anticipado";
+    showWlMsg("Hubo un error. Por favor intentá de nuevo.", false);
+  }
+}
+
+function showWlMsg(text, ok){
+  const msg = document.getElementById("wl-msg");
+  msg.textContent = text;
+  msg.className = "waitlist-msg " + (ok ? "ok" : "err");
+}
+</script>
 
 <!-- FIREBASE INIT -->
 <script>
@@ -553,10 +656,13 @@ function AuthScreen({onAuth}){
   );
 }
 
+// ── DEMO USER (sin login) ──────────────────────────────────────────────────
+const DEMO_USER = { name: "Inversor Demo", email: "demo@pampatoken.com" };
+const DEMO_BALANCE = { ...INITIAL_BALANCE, USD: 10000 };
+
 // ── APP PRINCIPAL (original con precios INMAG e intervalo 20s) ─────────────
 function PampaToken(){
-  const [authUser, setAuthUser]       = useState(undefined);
-  const [userData, setUserData]       = useState(null);
+  const [userData, setUserData]       = useState({ ...DEMO_USER, balance: DEMO_BALANCE, txHistory: [] });
   const [page, setPage]               = useState("market");
   const [selectedToken, setSelected]  = useState("HFORD");
   const [prices, setPrices]           = useState(()=>Object.fromEntries(Object.keys(TOKENS).map(t=>[t,TOKENS[t].basePrice])));
@@ -571,7 +677,6 @@ function PampaToken(){
   const [p2pPrice, setP2pPrice]       = useState("");
   const [p2pQty, setP2pQty]           = useState("");
   const [p2pPayment, setP2pPayment]   = useState("Transferencia");
-  const [saving, setSaving]           = useState(false);
 
   // AUTH LISTENER
   useEffect(()=>{
@@ -624,17 +729,11 @@ function PampaToken(){
 
   const showToast = msg=>{setToast({vis:true,msg});setTimeout(()=>setToast({vis:false,msg:""}),3200);};
 
-  const saveToCloud = async (newBalance, newTx) => {
-    if(!authUser) return;
-    setSaving(true);
-    try {
-      await db.collection("users").doc(authUser.uid).update({balance:newBalance,txHistory:newTx});
-      setUserData(prev=>({...prev,balance:newBalance,txHistory:newTx}));
-    } catch(e){ console.error(e); }
-    setSaving(false);
+  const saveToCloud = (newBalance, newTx) => {
+    setUserData(prev=>({...prev, balance: newBalance, txHistory: newTx}));
   };
 
-  const handleBuy = async () => {
+  const handleBuy = () => {
     const qty=parseFloat(buyQty);
     if(!qty||qty<=0) return showToast("⚠️ Ingresá una cantidad válida");
     const total=qty*prices[selectedToken];
@@ -643,11 +742,11 @@ function PampaToken(){
     const newBal={...bal,USD:+(bal.USD-total).toFixed(2),[selectedToken]:+(bal[selectedToken]+qty).toFixed(4)};
     const newTx=[{type:"BUY",token:selectedToken,qty,price:prices[selectedToken],total:+total.toFixed(2),ts:new Date().toLocaleTimeString()},...(userData.txHistory||[]).slice(0,49)];
     setBuyQty("");
-    await saveToCloud(newBal,newTx);
+    saveToCloud(newBal,newTx);
     showToast(`✅ Compraste ${qty} ${selectedToken} @ $${prices[selectedToken].toFixed(2)}`);
   };
 
-  const handleSell = async () => {
+  const handleSell = () => {
     const qty=parseFloat(sellQty);
     if(!qty||qty<=0) return showToast("⚠️ Ingresá una cantidad válida");
     const bal=userData.balance;
@@ -656,7 +755,7 @@ function PampaToken(){
     const newBal={...bal,USD:+(bal.USD+total).toFixed(2),[selectedToken]:+(bal[selectedToken]-qty).toFixed(4)};
     const newTx=[{type:"SELL",token:selectedToken,qty,price:prices[selectedToken],total:+total.toFixed(2),ts:new Date().toLocaleTimeString()},...(userData.txHistory||[]).slice(0,49)];
     setSellQty("");
-    await saveToCloud(newBal,newTx);
+    saveToCloud(newBal,newTx);
     showToast(`✅ Vendiste ${qty} ${selectedToken} @ $${prices[selectedToken].toFixed(2)}`);
   };
 
@@ -668,27 +767,6 @@ function PampaToken(){
     setP2pPrice("");setP2pQty("");
     showToast(`✅ Orden publicada: ${p2pSide.toUpperCase()} ${qty} ${p2pToken} @ $${price}`);
   };
-
-  const handleLogout = async () => { await auth.signOut(); };
-
-  // LOADING
-  if(authUser === undefined){
-    return(
-      <div style={{minHeight:"40vh",background:G.bg,display:"flex",alignItems:"center",justifyContent:"center"}}>
-        <div style={{textAlign:"center"}}>
-          <div style={{fontSize:48,marginBottom:12}}>🐄</div>
-          <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:24,color:G.cream,fontStyle:"italic"}}>Cargando PampaToken...</div>
-        </div>
-      </div>
-    );
-  }
-
-  if(!authUser) return <AuthScreen onAuth={setAuthUser}/>;
-  if(!userData) return(
-    <div style={{minHeight:"40vh",background:G.bg,display:"flex",alignItems:"center",justifyContent:"center"}}>
-      <div style={{textAlign:"center",color:G.cream}}>Cargando tu portfolio...</div>
-    </div>
-  );
 
   const token=TOKENS[selectedToken],price=prices[selectedToken],change=changes[selectedToken],candles=histories[selectedToken];
   const bal=userData.balance||INITIAL_BALANCE;
@@ -713,9 +791,7 @@ function PampaToken(){
         <div style={{display:"flex",alignItems:"center",gap:14}}>
           <span style={{fontSize:12,color:G.creamDim}}>💵 <strong style={{color:G.cream}}>${bal.USD.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}</strong></span>
           <span style={{fontSize:11,color:G.textDim}}>👤 {userData.name}</span>
-          {saving && <span style={{fontSize:10,color:G.gold,letterSpacing:1}}>guardando...</span>}
-          <button onClick={handleLogout} style={{padding:"5px 12px",background:"transparent",border:`1px solid ${G.border}`,borderRadius:4,color:G.creamDark,fontSize:11,letterSpacing:1,textTransform:"uppercase",cursor:"pointer"}}>Salir</button>
-          <span style={S.navBadge}>Testnet</span>
+          <span style={S.navBadge}>Demo</span>
         </div>
       </nav>
 
@@ -868,7 +944,7 @@ function PampaToken(){
       {page==="portfolio" && (
         <div style={S.page}>
           <h1 style={S.pageTitle}>Mi <em style={{color:G.green3}}>Portfolio</em></h1>
-          <p style={S.subtitle}>Posición actual · {userData.name} · Testnet PampaToken</p>
+          <p style={S.subtitle}>Posición actual · {userData.name} · Demo PampaToken</p>
           <div style={S.divider}/>
 
           <div style={{...S.card,padding:"28px 32px",marginBottom:24,background:`linear-gradient(135deg, ${G.bgLight}, ${G.bgCard})`,borderColor:G.borderLight,position:"relative",overflow:"hidden"}}>
